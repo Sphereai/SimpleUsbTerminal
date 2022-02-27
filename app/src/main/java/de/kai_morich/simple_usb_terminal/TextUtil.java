@@ -19,6 +19,10 @@ final class TextUtil {
     final static String newline_crlf = "\r\n";
     final static String newline_lf = "\n";
 
+    static boolean isEmpty(String str) {
+        return str == null || str.trim().length() <= 0;
+    }
+
     static byte[] fromHexString(final CharSequence s) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         byte b = 0;

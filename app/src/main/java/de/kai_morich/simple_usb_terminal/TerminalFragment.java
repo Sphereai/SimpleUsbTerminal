@@ -36,7 +36,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import com.hoho.android.usbserial.driver.SerialTimeoutException;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
@@ -46,7 +46,7 @@ import java.util.EnumSet;
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
 
-    private enum Connected { False, Pending, True }
+    private enum Connected {False, Pending, True}
 
     private final BroadcastReceiver broadcastReceiver;
     private int deviceId, portNum, baudRate;
@@ -69,7 +69,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if(Constants.INTENT_ACTION_GRANT_USB.equals(intent.getAction())) {
+                if (Constants.INTENT_ACTION_GRANT_USB.equals(intent.getAction())) {
                     Boolean granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
                     connect(granted);
                 }
@@ -101,7 +101,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     @Override
     public void onStart() {
         super.onStart();
-        if(service != null)
+        if (service != null)
             service.attach(this);
         else
             getActivity().startService(new Intent(getActivity(), SerialService.class)); // prevents service destroy on unbind from recreated activity caused by orientation change
@@ -109,12 +109,13 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     @Override
     public void onStop() {
-        if(service != null && !getActivity().isChangingConfigurations())
+        if (service != null && !getActivity().isChangingConfigurations())
             service.detach();
         super.onStop();
     }
 
-    @SuppressWarnings("deprecation") // onAttach(context) was added with API 23. onAttach(activity) works for all API versions
+    @SuppressWarnings("deprecation")
+    // onAttach(context) was added with API 23. onAttach(activity) works for all API versions
     @Override
     public void onAttach(@NonNull Activity activity) {
         super.onAttach(activity);
@@ -123,7 +124,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     @Override
     public void onDetach() {
-        try { getActivity().unbindService(this); } catch(Exception ignored) {}
+        try {
+            getActivity().unbindService(this);
+        } catch (Exception ignored) {
+        }
         super.onDetach();
     }
 
@@ -131,18 +135,18 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     public void onResume() {
         super.onResume();
         getActivity().registerReceiver(broadcastReceiver, new IntentFilter(Constants.INTENT_ACTION_GRANT_USB));
-        if(initialStart && service != null) {
+        if (initialStart && service != null) {
             initialStart = false;
             getActivity().runOnUiThread(this::connect);
         }
-        if(controlLinesEnabled && controlLines != null && connected == Connected.True)
+        if (controlLinesEnabled && controlLines != null && connected == Connected.True)
             controlLines.start();
     }
 
     @Override
     public void onPause() {
         getActivity().unregisterReceiver(broadcastReceiver);
-        if(controlLines != null)
+        if (controlLines != null)
             controlLines.stop();
         super.onPause();
     }
@@ -151,7 +155,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     public void onServiceConnected(ComponentName name, IBinder binder) {
         service = ((SerialService.SerialBinder) binder).getService();
         service.attach(this);
-        if(initialStart && isResumed()) {
+        if (initialStart && isResumed()) {
             initialStart = false;
             getActivity().runOnUiThread(this::connect);
         }
@@ -250,33 +254,33 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private void connect(Boolean permissionGranted) {
         UsbDevice device = null;
         UsbManager usbManager = (UsbManager) getActivity().getSystemService(Context.USB_SERVICE);
-        for(UsbDevice v : usbManager.getDeviceList().values())
-            if(v.getDeviceId() == deviceId)
+        for (UsbDevice v : usbManager.getDeviceList().values())
+            if (v.getDeviceId() == deviceId)
                 device = v;
-        if(device == null) {
+        if (device == null) {
             status("connection failed: device not found");
             return;
         }
         UsbSerialDriver driver = UsbSerialProber.getDefaultProber().probeDevice(device);
-        if(driver == null) {
+        if (driver == null) {
             driver = CustomProber.getCustomProber().probeDevice(device);
         }
-        if(driver == null) {
+        if (driver == null) {
             status("connection failed: no driver for device");
             return;
         }
-        if(driver.getPorts().size() < portNum) {
+        if (driver.getPorts().size() < portNum) {
             status("connection failed: not enough ports at device");
             return;
         }
         usbSerialPort = driver.getPorts().get(portNum);
         UsbDeviceConnection usbConnection = usbManager.openDevice(driver.getDevice());
-        if(usbConnection == null && permissionGranted == null && !usbManager.hasPermission(driver.getDevice())) {
+        if (usbConnection == null && permissionGranted == null && !usbManager.hasPermission(driver.getDevice())) {
             PendingIntent usbPermissionIntent = PendingIntent.getBroadcast(getActivity(), 0, new Intent(Constants.INTENT_ACTION_GRANT_USB), 0);
             usbManager.requestPermission(driver.getDevice(), usbPermissionIntent);
             return;
         }
-        if(usbConnection == null) {
+        if (usbConnection == null) {
             if (!usbManager.hasPermission(driver.getDevice()))
                 status("connection failed: permission denied");
             else
@@ -306,51 +310,168 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     private void send(String str) {
-        if(connected != Connected.True) {
-            Toast.makeText(getActivity(), "not connected", Toast.LENGTH_SHORT).show();
-            return;
-        }
         try {
-            String msg;
-            byte[] data;
-            if(hexEnabled) {
-                StringBuilder sb = new StringBuilder();
-                TextUtil.toHexString(sb, TextUtil.fromHexString(str));
-                TextUtil.toHexString(sb, newline.getBytes());
-                msg = sb.toString();
-                data = TextUtil.fromHexString(msg);
-            } else {
-                msg = str;
-                data = (str + newline).getBytes();
+            if (connected != Connected.True) {
+                Toast.makeText(getActivity(), "not connected", Toast.LENGTH_SHORT).show();
+                return;
             }
-            SpannableStringBuilder spn = new SpannableStringBuilder(msg + '\n');
-            spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorSendText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            receiveText.append(spn);
-            service.write(data);
-        } catch (SerialTimeoutException e) {
-            status("write timeout: " + e.getMessage());
-        } catch (Exception e) {
+
+            if (TextUtil.isEmpty(str)) {
+                Toast.makeText(getActivity(), "Please enter command to continue", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            TrivelProtocol.Command command = createCommand(str);
+
+            if (command == null) return;
+
+            appendTextToScreen(str);
+            service.write(command.toByteArray());
+
+        } catch (IOException e) {
             onSerialIoError(e);
         }
     }
 
-    private void receive(byte[] data) {
-        if(hexEnabled) {
-            receiveText.append(TextUtil.toHexString(data) + '\n');
-        } else {
-            String msg = new String(data);
-            if(newline.equals(TextUtil.newline_crlf) && msg.length() > 0) {
-                // don't show CR as ^M if directly before LF
-                msg = msg.replace(TextUtil.newline_crlf, TextUtil.newline_lf);
-                // special handling if CR and LF come in separate fragments
-                if (pendingNewline && msg.charAt(0) == '\n') {
-                    Editable edt = receiveText.getEditableText();
-                    if (edt != null && edt.length() > 1)
-                        edt.replace(edt.length() - 2, edt.length(), "");
+    @Nullable
+    private TrivelProtocol.Command createCommand(String str) {
+        String[] tokens = str.split(" ");
+        String firstCommand = tokens[0];
+        TrivelProtocol.Command command = null;
+
+        switch (firstCommand.toLowerCase()) {
+            case "g":
+                command = TrivelProtocol.Command.newBuilder().setAction(TrivelProtocol.Command.Action.GetSignals).build();
+                break;
+
+            case "i":
+                command = TrivelProtocol.Command.newBuilder().setAction(TrivelProtocol.Command.Action.Idle).build();
+                break;
+
+            case "c":
+                command = TrivelProtocol.Command.newBuilder().setAction(TrivelProtocol.Command.Action.StartCalibration).build();
+                break;
+
+            case "road":
+                double gain = tokens.length == 2 ? Double.parseDouble(tokens[1]) : 1;
+                command = TrivelProtocol.Command.newBuilder()
+                        .setAction(TrivelProtocol.Command.Action.SetRoadfeel)
+                        .setRoadfeelSettings(
+                                TrivelProtocol.RoadfeelSettings.newBuilder().setGain(gain))
+                        .build();
+                break;
+
+            // "a"
+            // "a [cadence]"
+            // "a [cadence] [ratio period]"
+            case "a":
+                TrivelProtocol.Command.Builder builder = TrivelProtocol.Command.newBuilder()
+                        .setAction(TrivelProtocol.Command.Action.SetAssistedMode)
+                        .setAssistanceSettings(
+                                TrivelProtocol.AssistanceSettings.newBuilder().setCadence(0))
+                        .setTimeOscillatorSettings(
+                                TrivelProtocol.OscillatorSettings.newBuilder().setGain(1).setPeriod(1));
+
+                if (tokens.length == 2 || tokens.length == 4) {
+                    builder.clearAssistanceSettings()
+                            .setAssistanceSettings(
+                                    TrivelProtocol.AssistanceSettings.newBuilder().setCadence(Double.parseDouble(tokens[1])));
                 }
-                pendingNewline = msg.charAt(msg.length() - 1) == '\r';
+                if (tokens.length == 4) {
+                    builder.clearTimeOscillatorSettings()
+                            .setTimeOscillatorSettings(
+                                    TrivelProtocol.OscillatorSettings.newBuilder()
+                                            .setGain(Double.parseDouble(tokens[2]))
+                                            .setPeriod(Double.parseDouble(tokens[3])));
+                }
+                command = builder.build();
+                break;
+
+            // "r"
+            // "r [damping inertia]"
+            // "r [damping inertia] t [ratio period]"
+            // "r [damping inertia] p [ratio bias]"
+            case "r":
+                TrivelProtocol.Command.Builder rBuilder = TrivelProtocol.Command.newBuilder()
+                        .setAction(TrivelProtocol.Command.Action.SetResistanceMode)
+                        .setResistanceSettings(
+                                TrivelProtocol.ResistanceSettings.newBuilder()
+                                        .setDamping(0)
+                                        .setInertia(0)
+                                        .setPositionOscillatorSettings(
+                                                TrivelProtocol.OscillatorSettings.newBuilder()
+                                                        .setGain(1)
+                                                        .setPhase(0)));
+
+                if (tokens.length == 3 || tokens.length == 6) {
+                    rBuilder.getResistanceSettingsBuilder()
+                            .setDamping(Double.parseDouble(tokens[1]))
+                            .setInertia(Double.parseDouble(tokens[2]));
+                }
+
+                if (tokens.length == 6) {
+                    if (tokens[3].equalsIgnoreCase("t")) {
+                        rBuilder.setTimeOscillatorSettings(
+                                TrivelProtocol.OscillatorSettings.newBuilder()
+                                        .setGain(Double.parseDouble(tokens[4]))
+                                        .setPeriod(Double.parseDouble(tokens[5])));
+                    }
+                    if (tokens[3].equalsIgnoreCase("p")) {
+                        rBuilder.getResistanceSettingsBuilder()
+                                .getPositionOscillatorSettingsBuilder()
+                                .setGain(Double.parseDouble(tokens[4]))
+                                .setPhase(Double.parseDouble(tokens[5]));
+                    }
+                }
+                command = rBuilder.build();
+                break;
+
+            default:
+                break;
+        }
+        return command;
+    }
+
+    private void appendTextToScreen(String str) {
+        String msg;
+        if (hexEnabled) {
+            StringBuilder sb = new StringBuilder();
+            TextUtil.toHexString(sb, TextUtil.fromHexString(str));
+            TextUtil.toHexString(sb, newline.getBytes());
+            msg = sb.toString();
+        } else {
+            msg = str;
+        }
+        SpannableStringBuilder spn = new SpannableStringBuilder(msg + '\n');
+        spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorSendText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        receiveText.append(spn);
+    }
+
+    private void receive(byte[] data) {
+
+        try {
+            TrivelProtocol.Reply reply = TrivelProtocol.Reply.parseFrom(data);
+
+            status("******* UnsignedInt Signals *******");
+            for (int index = 0; index < reply.getUnsignedIntSignalsCount(); index++) {
+                TrivelProtocol.UnsignedIntSignal signal = reply.getUnsignedIntSignals(index);
+                status(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
             }
-            receiveText.append(TextUtil.toCaretString(msg, newline.length() != 0));
+
+            status("******* Int Signals *******");
+            for (int index = 0; index < reply.getIntSignalsCount(); index++) {
+                TrivelProtocol.IntSignal signal = reply.getIntSignals(index);
+                status(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
+            }
+
+            status("******* Double Signals *******");
+            for (int index = 0; index < reply.getDoubleSignalsCount(); index++) {
+                TrivelProtocol.DoubleSignal signal = reply.getDoubleSignals(index);
+                status(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
+            }
+
+        } catch (InvalidProtocolBufferException e) {
+            status("invalid protocol: "+ e.getMessage());
         }
     }
 
@@ -367,7 +488,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     public void onSerialConnect() {
         status("connected");
         connected = Connected.True;
-        if(controlLinesEnabled)
+        if (controlLinesEnabled)
             controlLines.start();
     }
 
@@ -420,8 +541,14 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             }
             String ctrl = "";
             try {
-                if (btn.equals(rtsBtn)) { ctrl = "RTS"; usbSerialPort.setRTS(btn.isChecked()); }
-                if (btn.equals(dtrBtn)) { ctrl = "DTR"; usbSerialPort.setDTR(btn.isChecked()); }
+                if (btn.equals(rtsBtn)) {
+                    ctrl = "RTS";
+                    usbSerialPort.setRTS(btn.isChecked());
+                }
+                if (btn.equals(dtrBtn)) {
+                    ctrl = "DTR";
+                    usbSerialPort.setDTR(btn.isChecked());
+                }
             } catch (IOException e) {
                 status("set" + ctrl + " failed: " + e.getMessage());
             }
@@ -450,12 +577,18 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 return;
             try {
                 EnumSet<UsbSerialPort.ControlLine> controlLines = usbSerialPort.getSupportedControlLines();
-                if (!controlLines.contains(UsbSerialPort.ControlLine.RTS)) rtsBtn.setVisibility(View.INVISIBLE);
-                if (!controlLines.contains(UsbSerialPort.ControlLine.CTS)) ctsBtn.setVisibility(View.INVISIBLE);
-                if (!controlLines.contains(UsbSerialPort.ControlLine.DTR)) dtrBtn.setVisibility(View.INVISIBLE);
-                if (!controlLines.contains(UsbSerialPort.ControlLine.DSR)) dsrBtn.setVisibility(View.INVISIBLE);
-                if (!controlLines.contains(UsbSerialPort.ControlLine.CD))   cdBtn.setVisibility(View.INVISIBLE);
-                if (!controlLines.contains(UsbSerialPort.ControlLine.RI))   riBtn.setVisibility(View.INVISIBLE);
+                if (!controlLines.contains(UsbSerialPort.ControlLine.RTS))
+                    rtsBtn.setVisibility(View.INVISIBLE);
+                if (!controlLines.contains(UsbSerialPort.ControlLine.CTS))
+                    ctsBtn.setVisibility(View.INVISIBLE);
+                if (!controlLines.contains(UsbSerialPort.ControlLine.DTR))
+                    dtrBtn.setVisibility(View.INVISIBLE);
+                if (!controlLines.contains(UsbSerialPort.ControlLine.DSR))
+                    dsrBtn.setVisibility(View.INVISIBLE);
+                if (!controlLines.contains(UsbSerialPort.ControlLine.CD))
+                    cdBtn.setVisibility(View.INVISIBLE);
+                if (!controlLines.contains(UsbSerialPort.ControlLine.RI))
+                    riBtn.setVisibility(View.INVISIBLE);
                 run();
             } catch (IOException e) {
                 Toast.makeText(getActivity(), "getSupportedControlLines() failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
