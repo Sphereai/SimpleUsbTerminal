@@ -1,4 +1,4 @@
-package de.kai_morich.simple_usb_terminal;
+package de.kai_morich.usb_terminal;
 
 import com.hoho.android.usbserial.driver.CdcAcmSerialDriver;
 import com.hoho.android.usbserial.driver.ProbeTable;

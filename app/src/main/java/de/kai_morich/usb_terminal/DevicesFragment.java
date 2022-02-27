@@ -1,4 +1,4 @@
-package de.kai_morich.simple_usb_terminal;
+package de.kai_morich.usb_terminal;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -8,7 +8,6 @@ import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.ListFragment;
 import android.view.Menu;

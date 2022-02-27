@@ -1,4 +1,4 @@
-package de.kai_morich.simple_usb_terminal;
+package de.kai_morich.usb_terminal;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -12,7 +12,6 @@ import com.hoho.android.usbserial.util.SerialInputOutputManager;
 
 import java.io.IOException;
 import java.security.InvalidParameterException;
-import java.util.concurrent.Executors;
 
 public class SerialSocket implements SerialInputOutputManager.Listener {
 

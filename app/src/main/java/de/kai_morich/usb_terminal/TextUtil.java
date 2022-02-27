@@ -1,4 +1,4 @@
-package de.kai_morich.simple_usb_terminal;
+package de.kai_morich.usb_terminal;
 
 import android.text.Editable;
 import android.text.InputType;
