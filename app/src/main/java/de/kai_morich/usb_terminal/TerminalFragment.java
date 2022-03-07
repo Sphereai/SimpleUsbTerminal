@@ -40,7 +40,9 @@ import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.EnumSet;
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
@@ -449,7 +451,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private void receive(byte[] data) {
 
         try {
-            TrivelProtocol.Reply reply = TrivelProtocol.Reply.parseFrom(data);
+            InputStream inputStream = new ByteArrayInputStream(data);
+            TrivelProtocol.Reply reply =  TrivelProtocol.Reply.parseDelimitedFrom(inputStream);
 
             status("******* UnsignedInt Signals *******");
             for (int index = 0; index < reply.getUnsignedIntSignalsCount(); index++) {
@@ -470,7 +473,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             }
 
         } catch (InvalidProtocolBufferException e) {
-            status("invalid protocol: "+ e.getMessage());
+            status("INVALID_PROTOCOL_BUFFER_EXCEPTION: " + e.getMessage());
+        } catch (IOException e) {
+            status("IO_EXCEPTION: " + e.getMessage());
         }
     }
 
