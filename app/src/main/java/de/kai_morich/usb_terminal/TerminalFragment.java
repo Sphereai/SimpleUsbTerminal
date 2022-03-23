@@ -14,6 +14,7 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.text.Spannable;
@@ -43,9 +44,19 @@ import com.hoho.android.usbserial.driver.UsbSerialProber;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.EnumSet;
+import java.util.List;
+
+import de.kai_morich.usb_terminal.entities.DaoSession;
+import de.kai_morich.usb_terminal.entities.Signal;
+import de.kai_morich.usb_terminal.entities.SignalDao;
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
+
+    private Handler mHandler;
+    private Runnable mRunnable;
 
     private enum Connected {False, Pending, True}
 
@@ -65,6 +76,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private boolean controlLinesEnabled = false;
     private boolean pendingNewline = false;
     private String newline = TextUtil.newline_crlf;
+
+    private static final String HANDLER_THREAD_NAME = "HandlerThread";
+    private static final long DELAY_MILLIS = 200;
 
     public TerminalFragment() {
         broadcastReceiver = new BroadcastReceiver() {
@@ -160,11 +174,14 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             initialStart = false;
             getActivity().runOnUiThread(this::connect);
         }
+
+        initHandler();
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
         service = null;
+        stopHandler();
     }
 
     /*
@@ -242,6 +259,34 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             return true;
         } else {
             return super.onOptionsItemSelected(item);
+        }
+    }
+
+    /*
+     * Handler to send command after x milliseconds
+     */
+    private void initHandler() {
+        HandlerThread handlerThread = new HandlerThread(HANDLER_THREAD_NAME);
+        handlerThread.start();
+        mHandler = new Handler(handlerThread.getLooper());
+        mHandler.postDelayed(mRunnable = () -> {
+            sendGetSignalsCommand();
+            mHandler.postDelayed(mRunnable, DELAY_MILLIS);
+        }, DELAY_MILLIS);
+    }
+
+    private void stopHandler() {
+        mHandler.removeCallbacks(mRunnable);
+    }
+
+    private void sendGetSignalsCommand() {
+        if (service != null) {
+            try {
+                TrivelProtocol.Command command = TrivelProtocol.Command.newBuilder().setAction(TrivelProtocol.Command.Action.GetSignals).build();
+                service.write(command.toByteArray());
+            } catch (IOException e) {
+                onSerialIoError(e);
+            }
         }
     }
 
@@ -451,6 +496,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private void receive(byte[] data) {
 
         try {
+            List<Signal> signals = new ArrayList<>();
+
             InputStream inputStream = new ByteArrayInputStream(data);
             TrivelProtocol.Reply reply =  TrivelProtocol.Reply.parseDelimitedFrom(inputStream);
 
@@ -458,19 +505,50 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             for (int index = 0; index < reply.getUnsignedIntSignalsCount(); index++) {
                 TrivelProtocol.UnsignedIntSignal signal = reply.getUnsignedIntSignals(index);
                 status(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
+
+                Signal uIntSignal = new Signal();
+                uIntSignal.setType(Constants.SignalType.UINT);
+                uIntSignal.setKey(signal.getKey());
+                uIntSignal.setValue(String.valueOf(signal.getValue()));
+                uIntSignal.setUnits(signal.getUnits());
+                uIntSignal.setDate(new Date());
+
+                signals.add(uIntSignal);
             }
 
             status("******* Int Signals *******");
             for (int index = 0; index < reply.getIntSignalsCount(); index++) {
                 TrivelProtocol.IntSignal signal = reply.getIntSignals(index);
                 status(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
+
+                Signal intSignal = new Signal();
+                intSignal.setType(Constants.SignalType.INT);
+                intSignal.setKey(signal.getKey());
+                intSignal.setValue(String.valueOf(signal.getValue()));
+                intSignal.setUnits(signal.getUnits());
+                intSignal.setDate(new Date());
+
+                signals.add(intSignal);
             }
 
             status("******* Double Signals *******");
             for (int index = 0; index < reply.getDoubleSignalsCount(); index++) {
                 TrivelProtocol.DoubleSignal signal = reply.getDoubleSignals(index);
                 status(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
+
+                Signal doubleSignal = new Signal();
+                doubleSignal.setType(Constants.SignalType.DOUBLE);
+                doubleSignal.setKey(signal.getKey());
+                doubleSignal.setValue(String.valueOf(signal.getValue()));
+                doubleSignal.setUnits(signal.getUnits());
+                doubleSignal.setDate(new Date());
+
+                signals.add(doubleSignal);
             }
+
+            DaoSession daoSession = ((App) getActivity().getApplication()).getDaoSession();
+            SignalDao signalDao = daoSession.getSignalDao();
+            signalDao.insertInTx(signals);
 
         } catch (InvalidProtocolBufferException e) {
             status("INVALID_PROTOCOL_BUFFER_EXCEPTION: " + e.getMessage());

@@ -12,4 +12,10 @@ class Constants {
     static final int NOTIFY_MANAGER_START_FOREGROUND_SERVICE = 1001;
 
     private Constants() {}
+
+    public static class SignalType {
+        static final String UINT = "uint";
+        static final String INT = "int";
+        static final String DOUBLE = "double";
+    }
 }
