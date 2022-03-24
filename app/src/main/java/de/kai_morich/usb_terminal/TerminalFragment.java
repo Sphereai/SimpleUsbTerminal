@@ -42,6 +42,7 @@ import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -281,12 +282,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private void sendGetSignalsCommand() {
         if (service != null) {
-            try {
-                TrivelProtocol.Command command = TrivelProtocol.Command.newBuilder().setAction(TrivelProtocol.Command.Action.GetSignals).build();
-                service.write(command.toByteArray());
-            } catch (IOException e) {
-                onSerialIoError(e);
-            }
+            TrivelProtocol.Command command = TrivelProtocol.Command.newBuilder().setAction(TrivelProtocol.Command.Action.GetSignals).build();
+            sendCommandToSerialPort(command);
         }
     }
 
@@ -356,24 +353,31 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     private void send(String str) {
+        if (connected != Connected.True) {
+            Toast.makeText(getActivity(), "not connected", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (TextUtil.isEmpty(str)) {
+            Toast.makeText(getActivity(), "Please enter command to continue", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        TrivelProtocol.Command command = createCommand(str);
+
+        if (command == null) return;
+
+        appendTextToScreen(str);
+        sendCommandToSerialPort(command);
+    }
+
+    private void sendCommandToSerialPort(TrivelProtocol.Command command) {
         try {
-            if (connected != Connected.True) {
-                Toast.makeText(getActivity(), "not connected", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (TextUtil.isEmpty(str)) {
-                Toast.makeText(getActivity(), "Please enter command to continue", Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            TrivelProtocol.Command command = createCommand(str);
-
-            if (command == null) return;
-
-            appendTextToScreen(str);
-            service.write(command.toByteArray());
-
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            command.writeDelimitedTo(outputStream);
+            service.write(outputStream.toByteArray());
+            outputStream.flush();
+            outputStream.close();
         } catch (IOException e) {
             onSerialIoError(e);
         }
