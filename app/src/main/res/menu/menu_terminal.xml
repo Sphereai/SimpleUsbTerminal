@@ -2,6 +2,11 @@
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:id="@+id/start_stop"
+        android:icon="@drawable/ic_play_white_24dp"
+        android:title="Toggle Sending Signal"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/clear"
         android:icon="@drawable/ic_delete_white_24dp"
         android:title="Clear"
@@ -23,5 +28,9 @@
     <item
         android:id="@+id/sendBreak"
         android:title="Send BREAK"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/history"
+        android:title="View Signal History"
         app:showAsAction="never" />
 </menu>

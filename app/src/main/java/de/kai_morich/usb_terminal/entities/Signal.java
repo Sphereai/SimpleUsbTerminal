@@ -16,6 +16,10 @@ public class Signal {
     private Long id;
 
     @NotNull
+    @Property(nameInDb = "device_id")
+    private int deviceId;
+
+    @NotNull
     @Property(nameInDb = "type")
     private String type;
 
@@ -34,10 +38,11 @@ public class Signal {
     @Property(nameInDb = "date")
     private Date date;
 
-    @Generated(hash = 1917528167)
-    public Signal(Long id, @NotNull String type, @NotNull String key,
+    @Generated(hash = 292048286)
+    public Signal(Long id, int deviceId, @NotNull String type, @NotNull String key,
             @NotNull String value, @NotNull String units, Date date) {
         this.id = id;
+        this.deviceId = deviceId;
         this.type = type;
         this.key = key;
         this.value = value;
@@ -95,5 +100,13 @@ public class Signal {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+    public int getDeviceId() {
+        return this.deviceId;
+    }
+
+    public void setDeviceId(int deviceId) {
+        this.deviceId = deviceId;
     }
 }

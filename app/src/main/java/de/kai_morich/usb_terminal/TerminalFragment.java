@@ -72,6 +72,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private TextUtil.HexWatcher hexWatcher;
 
     private Connected connected = Connected.False;
+    private boolean startSendingGetSignals = false;
     private boolean initialStart = true;
     private boolean hexEnabled = false;
     private boolean controlLinesEnabled = false;
@@ -175,14 +176,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             initialStart = false;
             getActivity().runOnUiThread(this::connect);
         }
-
-        initHandler();
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
         service = null;
-        stopHandler();
     }
 
     /*
@@ -217,7 +215,17 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.clear) {
+        if (id == R.id.start_stop) {
+            if (startSendingGetSignals) {
+                item.setIcon(R.drawable.ic_play_white_24dp);
+                stopHandler();
+            } else {
+                item.setIcon(R.drawable.ic_stop_white_24dp);
+                initHandler();
+            }
+            startSendingGetSignals = !startSendingGetSignals;
+            return true;
+        } else if (id == R.id.clear) {
             receiveText.setText("");
             return true;
         } else if (id == R.id.newline) {
@@ -258,6 +266,18 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 status("send BREAK failed: " + e.getMessage());
             }
             return true;
+        } else if (id == R.id.history) {
+            Bundle args = new Bundle();
+            args.putInt("device", deviceId);
+            Fragment fragment = new SignalHistoryFragment();
+            fragment.setArguments(args);
+            getActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment, fragment, "history")
+                    .addToBackStack(null)
+                    .commit();
+            return true;
         } else {
             return super.onOptionsItemSelected(item);
         }
@@ -267,6 +287,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
      * Handler to send command after x milliseconds
      */
     private void initHandler() {
+        if (service == null) {
+            Toast.makeText(getActivity(), "Serial service is not connected yet. Please try later.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         HandlerThread handlerThread = new HandlerThread(HANDLER_THREAD_NAME);
         handlerThread.start();
         mHandler = new Handler(handlerThread.getLooper());
@@ -277,7 +302,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     private void stopHandler() {
-        mHandler.removeCallbacks(mRunnable);
+        if (mHandler != null) {
+            mHandler.removeCallbacks(mRunnable);
+        }
     }
 
     private void sendGetSignalsCommand() {
@@ -512,11 +539,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
                 Signal uIntSignal = new Signal();
                 uIntSignal.setType(Constants.SignalType.UINT);
+                uIntSignal.setDeviceId(deviceId);
                 uIntSignal.setKey(signal.getKey());
                 uIntSignal.setValue(String.valueOf(signal.getValue()));
                 uIntSignal.setUnits(signal.getUnits());
                 uIntSignal.setDate(new Date());
-
                 signals.add(uIntSignal);
             }
 
@@ -527,11 +554,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
                 Signal intSignal = new Signal();
                 intSignal.setType(Constants.SignalType.INT);
+                intSignal.setDeviceId(deviceId);
                 intSignal.setKey(signal.getKey());
                 intSignal.setValue(String.valueOf(signal.getValue()));
                 intSignal.setUnits(signal.getUnits());
                 intSignal.setDate(new Date());
-
                 signals.add(intSignal);
             }
 
@@ -542,11 +569,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
                 Signal doubleSignal = new Signal();
                 doubleSignal.setType(Constants.SignalType.DOUBLE);
+                doubleSignal.setDeviceId(deviceId);
                 doubleSignal.setKey(signal.getKey());
                 doubleSignal.setValue(String.valueOf(signal.getValue()));
                 doubleSignal.setUnits(signal.getUnits());
                 doubleSignal.setDate(new Date());
-
                 signals.add(doubleSignal);
             }
 

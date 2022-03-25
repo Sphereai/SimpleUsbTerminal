@@ -75,7 +75,7 @@ public class DevicesFragment extends ListFragment {
         setListAdapter(null);
         View header = getActivity().getLayoutInflater().inflate(R.layout.device_list_header, null, false);
         getListView().addHeaderView(header, null, false);
-        setEmptyText("<no USB devices found>");
+        setEmptyText("<No USB devices found>");
         ((TextView) getListView().getEmptyView()).setTextSize(18);
         setListAdapter(listAdapter);
     }
@@ -147,7 +147,12 @@ public class DevicesFragment extends ListFragment {
             args.putInt("baud", baudRate);
             Fragment fragment = new TerminalFragment();
             fragment.setArguments(args);
-            getFragmentManager().beginTransaction().replace(R.id.fragment, fragment, "terminal").addToBackStack(null).commit();
+            getActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment, fragment, "terminal")
+                    .addToBackStack(null)
+                    .commit();
         }
     }
 
