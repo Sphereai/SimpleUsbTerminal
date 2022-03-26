@@ -1,7 +1,10 @@
 package de.kai_morich.usb_terminal.view_holders;
 
+import android.annotation.SuppressLint;
 import android.view.View;
 import android.widget.TextView;
+
+import java.text.SimpleDateFormat;
 
 import de.kai_morich.usb_terminal.R;
 import de.kai_morich.usb_terminal.entities.Signal;
@@ -25,8 +28,11 @@ public class SignalViewHolder extends BaseViewHolder {
     }
 
     public void bind(Signal signal) {
+        @SuppressLint("SimpleDateFormat")
+        String date = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(signal.getDate());
+
         signalType.setText(signal.getType());
-        signalDate.setText(signal.getDate().toString());
+        signalDate.setText(date);
         signalKey.setText(signal.getKey());
         signalValue.setText(signal.getValue());
         signalUnit.setText(signal.getUnits());

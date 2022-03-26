@@ -58,6 +58,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private Handler mHandler;
     private Runnable mRunnable;
+    private HandlerThread mHandlerThread;
 
     private enum Connected {False, Pending, True}
 
@@ -292,9 +293,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             return;
         }
 
-        HandlerThread handlerThread = new HandlerThread(HANDLER_THREAD_NAME);
-        handlerThread.start();
-        mHandler = new Handler(handlerThread.getLooper());
+        mHandlerThread = new HandlerThread(HANDLER_THREAD_NAME);
+        mHandlerThread.start();
+        mHandler = new Handler(mHandlerThread.getLooper());
         mHandler.postDelayed(mRunnable = () -> {
             sendGetSignalsCommand();
             mHandler.postDelayed(mRunnable, DELAY_MILLIS);
@@ -303,7 +304,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private void stopHandler() {
         if (mHandler != null) {
-            mHandler.removeCallbacks(mRunnable);
+            mHandler.removeCallbacksAndMessages(null);
+            mHandlerThread.quitSafely();
         }
     }
 
@@ -526,66 +528,76 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private void receive(byte[] data) {
 
-        try {
-            List<Signal> signals = new ArrayList<>();
+        mHandler.post(() -> {
+            try {
+                List<Signal> signals = new ArrayList<>();
 
-            InputStream inputStream = new ByteArrayInputStream(data);
-            TrivelProtocol.Reply reply =  TrivelProtocol.Reply.parseDelimitedFrom(inputStream);
+                InputStream inputStream = new ByteArrayInputStream(data);
+                TrivelProtocol.Reply reply =  TrivelProtocol.Reply.parseDelimitedFrom(inputStream);
 
-            status("******* UnsignedInt Signals *******");
-            for (int index = 0; index < reply.getUnsignedIntSignalsCount(); index++) {
-                TrivelProtocol.UnsignedIntSignal signal = reply.getUnsignedIntSignals(index);
-                status(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
+                statusOnUiThread("******* UnsignedInt Signals *******");
+                for (int index = 0; index < reply.getUnsignedIntSignalsCount(); index++) {
+                    TrivelProtocol.UnsignedIntSignal signal = reply.getUnsignedIntSignals(index);
+                    statusOnUiThread(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
 
-                Signal uIntSignal = new Signal();
-                uIntSignal.setType(Constants.SignalType.UINT);
-                uIntSignal.setDeviceId(deviceId);
-                uIntSignal.setKey(signal.getKey());
-                uIntSignal.setValue(String.valueOf(signal.getValue()));
-                uIntSignal.setUnits(signal.getUnits());
-                uIntSignal.setDate(new Date());
-                signals.add(uIntSignal);
+                    Signal uIntSignal = new Signal();
+                    uIntSignal.setType(Constants.SignalType.UINT);
+                    uIntSignal.setDeviceId(deviceId);
+                    uIntSignal.setKey(signal.getKey());
+                    uIntSignal.setValue(String.valueOf(signal.getValue()));
+                    uIntSignal.setUnits(signal.getUnits());
+                    uIntSignal.setDate(new Date());
+                    signals.add(uIntSignal);
+                }
+
+                statusOnUiThread("******* Int Signals *******");
+                for (int index = 0; index < reply.getIntSignalsCount(); index++) {
+                    TrivelProtocol.IntSignal signal = reply.getIntSignals(index);
+                    statusOnUiThread(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
+
+                    Signal intSignal = new Signal();
+                    intSignal.setType(Constants.SignalType.INT);
+                    intSignal.setDeviceId(deviceId);
+                    intSignal.setKey(signal.getKey());
+                    intSignal.setValue(String.valueOf(signal.getValue()));
+                    intSignal.setUnits(signal.getUnits());
+                    intSignal.setDate(new Date());
+                    signals.add(intSignal);
+                }
+
+                statusOnUiThread("******* Double Signals *******");
+                for (int index = 0; index < reply.getDoubleSignalsCount(); index++) {
+                    TrivelProtocol.DoubleSignal signal = reply.getDoubleSignals(index);
+                    statusOnUiThread(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
+
+                    Signal doubleSignal = new Signal();
+                    doubleSignal.setType(Constants.SignalType.DOUBLE);
+                    doubleSignal.setDeviceId(deviceId);
+                    doubleSignal.setKey(signal.getKey());
+                    doubleSignal.setValue(String.valueOf(signal.getValue()));
+                    doubleSignal.setUnits(signal.getUnits());
+                    doubleSignal.setDate(new Date());
+                    signals.add(doubleSignal);
+                }
+
+                DaoSession daoSession = ((App) getActivity().getApplication()).getDaoSession();
+                SignalDao signalDao = daoSession.getSignalDao();
+                signalDao.insertInTx(signals);
+
+            } catch (InvalidProtocolBufferException e) {
+                statusOnUiThread("INVALID_PROTOCOL_BUFFER_EXCEPTION: " + e.getMessage());
+            } catch (IOException e) {
+                statusOnUiThread("IO_EXCEPTION: " + e.getMessage());
             }
+        });
+    }
 
-            status("******* Int Signals *******");
-            for (int index = 0; index < reply.getIntSignalsCount(); index++) {
-                TrivelProtocol.IntSignal signal = reply.getIntSignals(index);
-                status(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
-
-                Signal intSignal = new Signal();
-                intSignal.setType(Constants.SignalType.INT);
-                intSignal.setDeviceId(deviceId);
-                intSignal.setKey(signal.getKey());
-                intSignal.setValue(String.valueOf(signal.getValue()));
-                intSignal.setUnits(signal.getUnits());
-                intSignal.setDate(new Date());
-                signals.add(intSignal);
-            }
-
-            status("******* Double Signals *******");
-            for (int index = 0; index < reply.getDoubleSignalsCount(); index++) {
-                TrivelProtocol.DoubleSignal signal = reply.getDoubleSignals(index);
-                status(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
-
-                Signal doubleSignal = new Signal();
-                doubleSignal.setType(Constants.SignalType.DOUBLE);
-                doubleSignal.setDeviceId(deviceId);
-                doubleSignal.setKey(signal.getKey());
-                doubleSignal.setValue(String.valueOf(signal.getValue()));
-                doubleSignal.setUnits(signal.getUnits());
-                doubleSignal.setDate(new Date());
-                signals.add(doubleSignal);
-            }
-
-            DaoSession daoSession = ((App) getActivity().getApplication()).getDaoSession();
-            SignalDao signalDao = daoSession.getSignalDao();
-            signalDao.insertInTx(signals);
-
-        } catch (InvalidProtocolBufferException e) {
-            status("INVALID_PROTOCOL_BUFFER_EXCEPTION: " + e.getMessage());
-        } catch (IOException e) {
-            status("IO_EXCEPTION: " + e.getMessage());
-        }
+    void statusOnUiThread(String str) {
+        getActivity().runOnUiThread(() -> {
+            SpannableStringBuilder spn = new SpannableStringBuilder(str + '\n');
+            spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            receiveText.append(spn);
+        });
     }
 
     void status(String str) {
