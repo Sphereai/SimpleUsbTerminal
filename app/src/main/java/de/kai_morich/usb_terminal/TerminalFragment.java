@@ -60,6 +60,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private Runnable mRunnable;
     private HandlerThread mHandlerThread;
 
+    private Handler mReceiveSignalHandler;
+    private HandlerThread mReceiveSignalHandlerThread;
+
     private enum Connected {False, Pending, True}
 
     private final BroadcastReceiver broadcastReceiver;
@@ -81,6 +84,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private String newline = TextUtil.newline_crlf;
 
     private static final String HANDLER_THREAD_NAME = "HandlerThread";
+    private static final String RECEIVE_SIGNAL_HANDLER_THREAD_NAME = "RECEIVE_SIGNAL_THREAD";
     private static final long DELAY_MILLIS = 200;
 
     public TerminalFragment() {
@@ -177,11 +181,14 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             initialStart = false;
             getActivity().runOnUiThread(this::connect);
         }
+
+        initHandlerForReceivingSignals();
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
         service = null;
+        stopHandlerForReceivingSignals();
     }
 
     /*
@@ -306,6 +313,19 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         if (mHandler != null) {
             mHandler.removeCallbacksAndMessages(null);
             mHandlerThread.quitSafely();
+        }
+    }
+
+    private void initHandlerForReceivingSignals() {
+        mReceiveSignalHandlerThread = new HandlerThread(RECEIVE_SIGNAL_HANDLER_THREAD_NAME);
+        mReceiveSignalHandlerThread.start();
+        mReceiveSignalHandler = new Handler(mReceiveSignalHandlerThread.getLooper());
+    }
+
+    private void stopHandlerForReceivingSignals() {
+        if (mReceiveSignalHandler != null) {
+            mReceiveSignalHandler.removeCallbacksAndMessages(null);
+            mReceiveSignalHandlerThread.quitSafely();
         }
     }
 
@@ -528,7 +548,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private void receive(byte[] data) {
 
-        mHandler.post(() -> {
+        mReceiveSignalHandler.post(() -> {
             try {
                 List<Signal> signals = new ArrayList<>();
 
