@@ -497,6 +497,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                                 TrivelProtocol.ResistanceSettings.newBuilder()
                                         .setDamping(0)
                                         .setInertia(0)
+                                        .setTorque(0)
                                         .setPositionOscillatorSettings(
                                                 TrivelProtocol.OscillatorSettings.newBuilder()
                                                         .setGain(1)
@@ -505,6 +506,19 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 if (tokens.length == 2) {
                     rBuilder.getResistanceSettingsBuilder()
                             .setTorque(Double.parseDouble(tokens[1]));
+                }
+
+                if (tokens.length == 5) {
+                    rBuilder.getResistanceSettingsBuilder()
+                            .setTorque(Double.parseDouble(tokens[1]));
+
+                    if (tokens[2].equalsIgnoreCase("p")) {
+                        rBuilder.getResistanceSettingsBuilder()
+                                .getPositionOscillatorSettingsBuilder()
+                                .setGain(Double.parseDouble(tokens[3]))
+                                .setPhase(Double.parseDouble(tokens[4]));
+
+                    }
                 }
 
                 if (tokens.length == 3 || tokens.length == 6) {
