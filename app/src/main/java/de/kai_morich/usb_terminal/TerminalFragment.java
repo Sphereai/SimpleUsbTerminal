@@ -502,6 +502,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                                                         .setGain(1)
                                                         .setPhase(0)));
 
+                if (tokens.length == 2) {
+                    rBuilder.getResistanceSettingsBuilder()
+                            .setTorque(Double.parseDouble(tokens[1]));
+                }
+
                 if (tokens.length == 3 || tokens.length == 6) {
                     rBuilder.getResistanceSettingsBuilder()
                             .setDamping(Double.parseDouble(tokens[1]))
