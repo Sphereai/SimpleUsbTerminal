@@ -3,6 +3,7 @@ package de.kai_morich.usb_terminal;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -53,6 +54,7 @@ import java.util.List;
 import de.kai_morich.usb_terminal.entities.DaoSession;
 import de.kai_morich.usb_terminal.entities.Signal;
 import de.kai_morich.usb_terminal.entities.SignalDao;
+import de.kai_morich.usb_terminal.utils.CSVUtil;
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
 
@@ -286,9 +288,39 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     .addToBackStack(null)
                     .commit();
             return true;
+        } else if (id == R.id.csv_export) {
+            exportSignalsToCSV();
+            return true;
         } else {
             return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void exportSignalsToCSV() {
+        ProgressDialog progressDialog = new ProgressDialog(getActivity());
+        progressDialog.setTitle("Exporting to CSV");
+        progressDialog.setMessage("Please wait...");
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressDialog.show();
+        progressDialog.setCancelable(false);
+
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    CSVUtil.exportSignalsToCSV(getActivity());
+                } catch (Exception e) {
+                    statusOnUiThread(e.getMessage());
+                } finally {
+                    getActivity().runOnUiThread(() -> {
+                        progressDialog.dismiss();
+                        Toast.makeText(getActivity(), "Signals data is exported to CSV. Please check downloads folder.", Toast.LENGTH_LONG).show();
+                    });
+                }
+            }
+        };
+
+        thread.start();
     }
 
     /*

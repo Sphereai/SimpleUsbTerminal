@@ -33,4 +33,8 @@
         android:id="@+id/history"
         android:title="View Signal History"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/csv_export"
+        android:title="Export to csv"
+        app:showAsAction="never" />
 </menu>
