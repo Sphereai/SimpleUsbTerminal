@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Environment;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -18,6 +19,7 @@ import de.kai_morich.usb_terminal.entities.Signal;
 import de.kai_morich.usb_terminal.entities.SignalDao;
 
 public class CSVUtil {
+
     private static String getCsvFilename() {
         return "usb_terminal_signals.csv";
     }
@@ -33,6 +35,12 @@ public class CSVUtil {
         } else {
             throw new Exception("External storage is not mounted.");
         }
+    }
+
+    private static void showSavedLocation(Context context, File file) {
+        ((Activity) context).runOnUiThread(() -> {
+            Toast.makeText(context, "File saved at: " + file.getAbsolutePath(), Toast.LENGTH_LONG).show();
+        });
     }
 
     @SuppressLint("SimpleDateFormat")
@@ -58,5 +66,7 @@ public class CSVUtil {
             });
         }
         csvWriter.close();
+
+        showSavedLocation(context, file);
     }
 }

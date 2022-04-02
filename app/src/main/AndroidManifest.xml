@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="de.kai_morich.usb_terminal">
 
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <!-- mipmap/ic_launcher created with Android Studio -> New -> Image Asset using @color/colorPrimaryDark as background color -->
@@ -12,6 +13,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme"
         android:allowBackup="false"
+        android:requestLegacyExternalStorage="true"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning">
             <!-- for this simple app launchMode=singleTask and singleTop have same effect.
                  If you would start another activity in the app, e.g. Android Settings

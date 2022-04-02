@@ -1,5 +1,6 @@
 package de.kai_morich.usb_terminal;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
@@ -10,9 +11,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -35,6 +38,7 @@ import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -88,6 +92,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private static final String HANDLER_THREAD_NAME = "HandlerThread";
     private static final String RECEIVE_SIGNAL_HANDLER_THREAD_NAME = "RECEIVE_SIGNAL_THREAD";
     private static final long DELAY_MILLIS = 200;
+    private int EXTERNAL_STORAGE_PERMISSION_CODE = 23;
 
     public TerminalFragment() {
         broadcastReceiver = new BroadcastReceiver() {
@@ -296,7 +301,24 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         }
     }
 
+    private boolean checkPermissionForWriteExternalStorage() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            int result = getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            return result == PackageManager.PERMISSION_GRANTED;
+        }
+        return false;
+    }
+
     private void exportSignalsToCSV() {
+
+        if (! checkPermissionForWriteExternalStorage()) {
+            ActivityCompat.requestPermissions(
+                    getActivity(),
+                    new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    EXTERNAL_STORAGE_PERMISSION_CODE
+            );
+        }
+
         ProgressDialog progressDialog = new ProgressDialog(getActivity());
         progressDialog.setTitle("Exporting to CSV");
         progressDialog.setMessage("Please wait...");
@@ -314,7 +336,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 } finally {
                     getActivity().runOnUiThread(() -> {
                         progressDialog.dismiss();
-                        Toast.makeText(getActivity(), "Signals data is exported to CSV. Please check downloads folder.", Toast.LENGTH_LONG).show();
                     });
                 }
             }
