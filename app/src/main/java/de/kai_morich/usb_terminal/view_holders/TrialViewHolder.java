@@ -21,8 +21,8 @@ public class TrialViewHolder extends BaseViewHolder {
     }
 
     public void bind(Trial trial) {
-        trialNumber.setText(String.valueOf(trial.getTrialNumber()));
-        dateStarted.setText(trial.getStartDate());
-        dateLastAction.setText(trial.getLastActionDate());
+        trialNumber.setText(String.format("Number: %d", trial.getTrialNumber()));
+        dateStarted.setText(String.format("Date Started: %s", trial.getStartDate()));
+        dateLastAction.setText(String.format("Last Action Date: %s", trial.getLastActionDate()));
     }
 }
