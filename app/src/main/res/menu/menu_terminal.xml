@@ -30,8 +30,8 @@
         android:title="Send BREAK"
         app:showAsAction="never" />
     <item
-        android:id="@+id/history"
-        android:title="View Signal History"
+        android:id="@+id/trials"
+        android:title="View Trials"
         app:showAsAction="never" />
     <item
         android:id="@+id/csv_export"

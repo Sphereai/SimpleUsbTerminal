@@ -3,6 +3,7 @@ package de.kai_morich.usb_terminal;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -31,6 +32,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,6 +54,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
@@ -58,6 +62,10 @@ import java.util.List;
 import de.kai_morich.usb_terminal.entities.DaoSession;
 import de.kai_morich.usb_terminal.entities.Signal;
 import de.kai_morich.usb_terminal.entities.SignalDao;
+import de.kai_morich.usb_terminal.entities.Trial;
+import de.kai_morich.usb_terminal.entities.TrialDao;
+import de.kai_morich.usb_terminal.entities.TrialData;
+import de.kai_morich.usb_terminal.entities.TrialDataDao;
 import de.kai_morich.usb_terminal.utils.CSVUtil;
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
@@ -68,6 +76,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private Handler mReceiveSignalHandler;
     private HandlerThread mReceiveSignalHandlerThread;
+    private boolean trialDialogShown = false;
+    private EditText startDate, lastActionDate;
 
     private enum Connected {False, Pending, True}
 
@@ -93,6 +103,12 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private static final String RECEIVE_SIGNAL_HANDLER_THREAD_NAME = "RECEIVE_SIGNAL_THREAD";
     private static final long DELAY_MILLIS = 200;
     private int EXTERNAL_STORAGE_PERMISSION_CODE = 23;
+
+    private static final String START_DATE_TAG = "start_date";
+    private static final String LAST_ACTION_DATE_TAG = "last_action_date";
+
+    private String strTrialNumber, strStartDate, strLastActionDate;
+    private long lastTrialInsertedId = -1;
 
     public TerminalFragment() {
         broadcastReceiver = new BroadcastReceiver() {
@@ -125,6 +141,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             disconnect();
         getActivity().stopService(new Intent(getActivity(), SerialService.class));
         super.onDestroy();
+
+        trialDialogShown = false;
     }
 
     @Override
@@ -149,6 +167,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     public void onAttach(@NonNull Activity activity) {
         super.onAttach(activity);
         getActivity().bindService(new Intent(getActivity(), SerialService.class), this, Context.BIND_AUTO_CREATE);
+
+
     }
 
     @Override
@@ -170,6 +190,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         }
         if (controlLinesEnabled && controlLines != null && connected == Connected.True)
             controlLines.start();
+
+        if (!trialDialogShown) {
+            showDialogForTrialInput();
+            trialDialogShown = true;
+        }
     }
 
     @Override
@@ -281,15 +306,12 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 status("send BREAK failed: " + e.getMessage());
             }
             return true;
-        } else if (id == R.id.history) {
-            Bundle args = new Bundle();
-            args.putInt("device", deviceId);
-            Fragment fragment = new SignalHistoryFragment();
-            fragment.setArguments(args);
+        } else if (id == R.id.trials) {
+            Fragment fragment = new TrialFragment();
             getActivity()
                     .getSupportFragmentManager()
                     .beginTransaction()
-                    .replace(R.id.fragment, fragment, "history")
+                    .replace(R.id.fragment, fragment, "trials")
                     .addToBackStack(null)
                     .commit();
             return true;
@@ -299,6 +321,83 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         } else {
             return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void showDialogForTrialInput() {
+        LayoutInflater inflater = LayoutInflater.from(getActivity());
+
+        final View trialView = inflater.inflate(R.layout.view_trial, null);
+        final EditText trialNumber = trialView.findViewById(R.id.trial_number);
+        startDate = trialView.findViewById(R.id.start_date);
+        lastActionDate = trialView.findViewById(R.id.last_action_date);
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setIcon(R.drawable.ic_notification)
+                .setTitle("Trial Data")
+                .setView(trialView)
+                .setCancelable(false)
+                .setPositiveButton("Continue", (dialogInterface, whichButton) -> {
+                    strTrialNumber = trialNumber.getText().toString();
+                    strStartDate = startDate.getText().toString();
+                    strLastActionDate = lastActionDate.getText().toString();
+
+                    saveTrialData();
+                });
+        builder.show();
+
+        hideKeyboard(startDate);
+        hideKeyboard(lastActionDate);
+
+        DatePickerDialog.OnDateSetListener listener = (datePicker, year, month, day) -> {
+            String date = String.format("%d/%d/%d", day, month + 1, year);
+            if (datePicker.getTag().equals(START_DATE_TAG)) {
+                startDate.setText(date);
+            }
+
+            if (datePicker.getTag().equals(LAST_ACTION_DATE_TAG)) {
+                lastActionDate.setText(date);
+            }
+        };
+
+        startDate.setOnClickListener(view -> {
+            startDate.clearFocus();
+            ((InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(startDate.getWindowToken(), 0);
+
+            showDatePickerDialog(START_DATE_TAG, listener);
+        });
+
+        lastActionDate.setOnClickListener(view -> {
+            lastActionDate.clearFocus();
+            ((InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(lastActionDate.getWindowToken(), 0);
+
+            showDatePickerDialog(LAST_ACTION_DATE_TAG, listener);
+        });
+    }
+
+    private void hideKeyboard(EditText editText) {
+        editText.setCursorVisible(false);
+        editText.setFocusableInTouchMode(false);
+        editText.setFocusable(false);
+    }
+
+    private void showDatePickerDialog(String tag, DatePickerDialog.OnDateSetListener listener) {
+
+        final Calendar calendar = Calendar.getInstance();
+        DatePickerDialog picker = new DatePickerDialog(getActivity(), listener, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+        picker.getDatePicker().setTag(tag);
+        picker.show();
+    }
+
+    private void saveTrialData() {
+        Trial trial = new Trial();
+        trial.setUserId(1);
+        trial.setTrialNumber(Integer.parseInt(strTrialNumber));
+        trial.setStartDate(strStartDate);
+        trial.setLastActionDate(strLastActionDate);
+
+        DaoSession daoSession = ((App) getActivity().getApplication()).getDaoSession();
+        TrialDao trialDao = daoSession.getTrialDao();
+        lastTrialInsertedId = trialDao.insert(trial);
     }
 
     private boolean checkPermissionForWriteExternalStorage() {
@@ -311,10 +410,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private void exportSignalsToCSV() {
 
-        if (! checkPermissionForWriteExternalStorage()) {
+        if (!checkPermissionForWriteExternalStorage()) {
             ActivityCompat.requestPermissions(
                     getActivity(),
-                    new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     EXTERNAL_STORAGE_PERMISSION_CODE
             );
         }
@@ -625,7 +724,21 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 List<Signal> signals = new ArrayList<>();
 
                 InputStream inputStream = new ByteArrayInputStream(data);
-                TrivelProtocol.Reply reply =  TrivelProtocol.Reply.parseDelimitedFrom(inputStream);
+                TrivelProtocol.Reply reply = TrivelProtocol.Reply.parseDelimitedFrom(inputStream);
+
+                DaoSession daoSession = ((App) getActivity().getApplication()).getDaoSession();
+                TrialDataDao trialDataDao = daoSession.getTrialDataDao();
+                SignalDao signalDao = daoSession.getSignalDao();
+
+                TrialData trialData = new TrialData();
+                trialData.setTrialId(lastTrialInsertedId);
+                trialData.setDeviceId(deviceId);
+                trialData.setCadence(reply.getCadence());
+                trialData.setPosition(reply.getPosition());
+                trialData.setTorque(reply.getTorque());
+                trialData.setPower(reply.getPower());
+                trialData.setDate(new Date());
+                long lastInsertedTrialDataId = trialDataDao.insert(trialData);
 
                 statusOnUiThread("******* UnsignedInt Signals *******");
                 for (int index = 0; index < reply.getUnsignedIntSignalsCount(); index++) {
@@ -633,12 +746,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     statusOnUiThread(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
 
                     Signal uIntSignal = new Signal();
+                    uIntSignal.setTrialDataId(lastInsertedTrialDataId);
                     uIntSignal.setType(Constants.SignalType.UINT);
-                    uIntSignal.setDeviceId(deviceId);
                     uIntSignal.setKey(signal.getKey());
                     uIntSignal.setValue(String.valueOf(signal.getValue()));
                     uIntSignal.setUnits(signal.getUnits());
-                    uIntSignal.setDate(new Date());
                     signals.add(uIntSignal);
                 }
 
@@ -648,12 +760,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     statusOnUiThread(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
 
                     Signal intSignal = new Signal();
+                    intSignal.setTrialDataId(lastInsertedTrialDataId);
                     intSignal.setType(Constants.SignalType.INT);
-                    intSignal.setDeviceId(deviceId);
                     intSignal.setKey(signal.getKey());
                     intSignal.setValue(String.valueOf(signal.getValue()));
                     intSignal.setUnits(signal.getUnits());
-                    intSignal.setDate(new Date());
                     signals.add(intSignal);
                 }
 
@@ -664,16 +775,13 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
                     Signal doubleSignal = new Signal();
                     doubleSignal.setType(Constants.SignalType.DOUBLE);
-                    doubleSignal.setDeviceId(deviceId);
+                    doubleSignal.setTrialDataId(lastInsertedTrialDataId);
                     doubleSignal.setKey(signal.getKey());
                     doubleSignal.setValue(String.valueOf(signal.getValue()));
                     doubleSignal.setUnits(signal.getUnits());
-                    doubleSignal.setDate(new Date());
                     signals.add(doubleSignal);
                 }
 
-                DaoSession daoSession = ((App) getActivity().getApplication()).getDaoSession();
-                SignalDao signalDao = daoSession.getSignalDao();
                 signalDao.insertInTx(signals);
 
             } catch (InvalidProtocolBufferException e) {
@@ -823,5 +931,4 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             riBtn.setChecked(false);
         }
     }
-
 }

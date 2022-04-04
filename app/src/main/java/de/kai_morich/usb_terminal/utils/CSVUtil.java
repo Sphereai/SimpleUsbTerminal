@@ -61,8 +61,7 @@ public class CSVUtil {
                     signal.getType(),
                     signal.getKey(),
                     signal.getValue(),
-                    signal.getUnits(),
-                    new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(signal.getDate())
+                    signal.getUnits()
             });
         }
         csvWriter.close();

@@ -16,49 +16,47 @@ import org.greenrobot.greendao.query.QueryBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.kai_morich.usb_terminal.adapters.SignalAdapter;
-import de.kai_morich.usb_terminal.entities.Signal;
-import de.kai_morich.usb_terminal.entities.SignalDao;
+import de.kai_morich.usb_terminal.adapters.TrialAdapter;
+import de.kai_morich.usb_terminal.entities.Trial;
+import de.kai_morich.usb_terminal.entities.TrialDao;
 
+/**
+ * A simple {@link Fragment} subclass.
+ * create an instance of this fragment.
+ */
+public class TrialFragment extends Fragment {
 
-public class SignalHistoryFragment extends Fragment {
-
-    private int mDeviceId;
     private int currentPage = 0;
     private boolean isLoading = false;
     private boolean isLastPage = false;
-    private SignalAdapter mSignalAdapter;
+    private TrialAdapter mTrialAdapter;
 
-    private SignalDao mSignalDao;
+    private TrialDao mTrialDao;
 
     private RecyclerView mRecyclerView;
 
-    public SignalHistoryFragment() {
+    public TrialFragment() {
         // Required empty public constructor
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mDeviceId = getArguments().getInt("device");
-        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        mTrialDao = ((App)getActivity().getApplication()).getDaoSession().getTrialDao();
 
-        mSignalDao = ((App)getActivity().getApplication()).getDaoSession().getSignalDao();
-
-        View view = inflater.inflate(R.layout.fragment_signal_history, container, false);
-        mRecyclerView = view.findViewById(R.id.recycler_view);
+        View view = inflater.inflate(R.layout.fragment_trial, container, false);
+        mRecyclerView = view.findViewById(R.id.trial_recycler_view);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
-        mSignalAdapter = new SignalAdapter(new ArrayList<>());
+        mTrialAdapter = new TrialAdapter(new ArrayList<>());
         mRecyclerView.setLayoutManager(layoutManager);
         mRecyclerView.addItemDecoration(new DividerItemDecoration(mRecyclerView.getContext(), DividerItemDecoration.VERTICAL));
-        mRecyclerView.setAdapter(mSignalAdapter);
+        mRecyclerView.setAdapter(mTrialAdapter);
 
         mRecyclerView.addOnScrollListener(new PaginationScrollListener(layoutManager) {
             @Override
@@ -89,42 +87,41 @@ public class SignalHistoryFragment extends Fragment {
     }
 
     private void loadFirstPage() {
-        List<Signal> signals = getSignals();
+        List<Trial> trials = getTrials();
         int totalPages = getTotalPageCount();
-        mSignalAdapter.addAllSignals(signals);
+        mTrialAdapter.addAllTrials(trials);
 
         if (currentPage <= totalPages) {
-            mSignalAdapter.addLoading();
+            mTrialAdapter.addLoading();
         } else {
             isLastPage = true;
         }
-
     }
 
     private void loadNextPage() {
-        mSignalAdapter.removeLoading();
+        mTrialAdapter.removeLoading();
         isLoading = false;
 
-        List<Signal> signals = getSignals();
+        List<Trial> trials = getTrials();
         int totalPages = getTotalPageCount();
-        mSignalAdapter.addAllSignals(signals);
+        mTrialAdapter.addAllTrials(trials);
 
         if (currentPage != totalPages) {
-            mSignalAdapter.addLoading();
+            mTrialAdapter.addLoading();
         } else {
             isLastPage = true;
         }
     }
 
-    private List<Signal> getSignals() {
-        QueryBuilder<Signal> queryBuilder = mSignalDao.queryBuilder();
+    private List<Trial> getTrials() {
+        QueryBuilder<Trial> queryBuilder = mTrialDao.queryBuilder();
         queryBuilder.limit(Constants.PAGE_SIZE);
         queryBuilder.offset(currentPage * Constants.PAGE_SIZE);
         return queryBuilder.list();
     }
 
     private int getTotalPageCount() {
-        QueryBuilder<Signal> queryBuilder = mSignalDao.queryBuilder();
+        QueryBuilder<Trial> queryBuilder = mTrialDao.queryBuilder();
         long count = queryBuilder.count();
         return (int) Math.ceil(count/Constants.PAGE_SIZE);
     }
