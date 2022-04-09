@@ -58,6 +58,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import de.kai_morich.usb_terminal.entities.DaoSession;
 import de.kai_morich.usb_terminal.entities.Signal;
@@ -70,12 +73,11 @@ import de.kai_morich.usb_terminal.utils.CSVUtil;
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
 
-    private Handler mHandler;
-    private Runnable mRunnable;
-    private HandlerThread mHandlerThread;
-
     private Handler mReceiveSignalHandler;
     private HandlerThread mReceiveSignalHandlerThread;
+
+    private ScheduledThreadPoolExecutor threadPoolExecutor;
+
     private boolean trialDialogShown = false;
     private EditText startDate, lastActionDate;
 
@@ -99,9 +101,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private boolean pendingNewline = false;
     private String newline = TextUtil.newline_crlf;
 
-    private static final String HANDLER_THREAD_NAME = "HandlerThread";
     private static final String RECEIVE_SIGNAL_HANDLER_THREAD_NAME = "RECEIVE_SIGNAL_THREAD";
-    private static final long DELAY_MILLIS = 200;
+
     private int EXTERNAL_STORAGE_PERMISSION_CODE = 23;
 
     private static final String START_DATE_TAG = "start_date";
@@ -109,6 +110,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private String strTrialNumber, strStartDate, strLastActionDate;
     private long lastTrialInsertedId = -1;
+    private int counter = 0;
 
     public TerminalFragment() {
         broadcastReceiver = new BroadcastReceiver() {
@@ -190,11 +192,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         }
         if (controlLinesEnabled && controlLines != null && connected == Connected.True)
             controlLines.start();
-
-        if (!trialDialogShown) {
-            showDialogForTrialInput();
-            trialDialogShown = true;
-        }
     }
 
     @Override
@@ -215,6 +212,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         }
 
         initHandlerForReceivingSignals();
+
+        if (!trialDialogShown) {
+            showDialogForTrialInput();
+            trialDialogShown = true;
+        }
     }
 
     @Override
@@ -452,19 +454,20 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             return;
         }
 
-        mHandlerThread = new HandlerThread(HANDLER_THREAD_NAME);
-        mHandlerThread.start();
-        mHandler = new Handler(mHandlerThread.getLooper());
-        mHandler.postDelayed(mRunnable = () -> {
+        stopHandler();
+
+        threadPoolExecutor = new ScheduledThreadPoolExecutor(2);
+        threadPoolExecutor.scheduleAtFixedRate(() -> {
+            showCounterOnScreen();
             sendGetSignalsCommand();
-            mHandler.postDelayed(mRunnable, DELAY_MILLIS);
-        }, DELAY_MILLIS);
+        }, 0L, 200L, TimeUnit.MILLISECONDS);
     }
 
     private void stopHandler() {
-        if (mHandler != null) {
-            mHandler.removeCallbacksAndMessages(null);
-            mHandlerThread.quitSafely();
+        this.counter = 0;
+        if (threadPoolExecutor != null) {
+            threadPoolExecutor.shutdown();
+            threadPoolExecutor = null;
         }
     }
 
@@ -484,6 +487,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private void sendGetSignalsCommand() {
         if (service != null) {
             TrivelProtocol.Command command = TrivelProtocol.Command.newBuilder().setAction(TrivelProtocol.Command.Action.GetSignals).build();
+
             sendCommandToSerialPort(command);
         }
     }
@@ -580,7 +584,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             outputStream.flush();
             outputStream.close();
         } catch (IOException e) {
-            onSerialIoError(e);
+            getActivity().runOnUiThread(() -> {
+                onSerialIoError(e);
+            });
         }
     }
 
@@ -795,6 +801,14 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     void statusOnUiThread(String str) {
         getActivity().runOnUiThread(() -> {
             SpannableStringBuilder spn = new SpannableStringBuilder(str + '\n');
+            spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            receiveText.append(spn);
+        });
+    }
+
+    void showCounterOnScreen() {
+        getActivity().runOnUiThread(() -> {
+            SpannableStringBuilder spn = new SpannableStringBuilder(String.format(Locale.getDefault(), "Showing %d value after 200 milliseconds", ++counter) + '\n');
             spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             receiveText.append(spn);
         });

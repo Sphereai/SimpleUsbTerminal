@@ -19,6 +19,16 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
         getSupportFragmentManager().addOnBackStackChangedListener(this);
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction().add(R.id.fragment, new DevicesFragment(), "devices").commit();
+
+//            Bundle args = new Bundle();
+//            args.putInt("device", 1218);
+//            args.putInt("port", 80);
+//            args.putInt("baud", 100);
+//            TerminalFragment terminalFragment = new TerminalFragment();
+//            terminalFragment.setArguments(args);
+//            getSupportFragmentManager().beginTransaction().add(R.id.fragment, terminalFragment, "terminal").commit();
+
+//            getSupportFragmentManager().beginTransaction().add(R.id.fragment, new CounterFragment(), "counter").commit();
         } else {
             onBackStackChanged();
         }

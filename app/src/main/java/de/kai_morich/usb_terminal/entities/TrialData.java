@@ -34,16 +34,16 @@ public class TrialData {
     private int deviceId;
 
     @Property(nameInDb = "cadence")
-    private double cadence;
+    private Double cadence;
 
     @Property(nameInDb = "position")
-    private double position;
+    private Double position;
 
     @Property(nameInDb = "torque")
-    private double torque;
+    private Double torque;
 
     @Property(nameInDb = "power")
-    private double power;
+    private Double power;
 
     @Property(nameInDb = "date")
     private Date date;
@@ -56,9 +56,9 @@ public class TrialData {
     @Generated(hash = 463436282)
     private transient TrialDataDao myDao;
 
-    @Generated(hash = 289354871)
-    public TrialData(Long id, long trialId, int deviceId, double cadence,
-            double position, double torque, double power, Date date) {
+    @Generated(hash = 2035947855)
+    public TrialData(Long id, long trialId, int deviceId, Double cadence,
+            Double position, Double torque, Double power, Date date) {
         this.id = id;
         this.trialId = trialId;
         this.deviceId = deviceId;
@@ -97,35 +97,35 @@ public class TrialData {
         this.deviceId = deviceId;
     }
 
-    public double getCadence() {
+    public Double getCadence() {
         return this.cadence;
     }
 
-    public void setCadence(double cadence) {
+    public void setCadence(Double cadence) {
         this.cadence = cadence;
     }
 
-    public double getPosition() {
+    public Double getPosition() {
         return this.position;
     }
 
-    public void setPosition(double position) {
+    public void setPosition(Double position) {
         this.position = position;
     }
 
-    public double getTorque() {
+    public Double getTorque() {
         return this.torque;
     }
 
-    public void setTorque(double torque) {
+    public void setTorque(Double torque) {
         this.torque = torque;
     }
 
-    public double getPower() {
+    public Double getPower() {
         return this.power;
     }
 
-    public void setPower(double power) {
+    public void setPower(Double power) {
         this.power = power;
     }
 
