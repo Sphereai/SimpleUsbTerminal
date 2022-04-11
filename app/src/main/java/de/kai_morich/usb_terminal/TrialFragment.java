@@ -91,7 +91,7 @@ public class TrialFragment extends Fragment {
         int totalPages = getTotalPageCount();
         mTrialAdapter.addAllTrials(trials);
 
-        if (currentPage <= totalPages) {
+        if (currentPage < totalPages) {
             mTrialAdapter.addLoading();
         } else {
             isLastPage = true;

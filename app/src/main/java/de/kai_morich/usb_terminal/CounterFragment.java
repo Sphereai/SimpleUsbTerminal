@@ -41,7 +41,7 @@ import de.kai_morich.usb_terminal.entities.TrialDataDao;
 public class CounterFragment extends Fragment {
 
     private boolean started = false;
-    private int counter = 0;
+    private int counter = 1;
 
     private Handler mHandler;
     private Runnable mRunnable;
@@ -105,11 +105,9 @@ public class CounterFragment extends Fragment {
     }
 
     private void initHandler() {
-        this.counter = 0;
-
         stopHandler();
 
-        poolExecutor = new ScheduledThreadPoolExecutor(2);
+        poolExecutor = new ScheduledThreadPoolExecutor(1);
         poolExecutor.scheduleAtFixedRate(() -> {
             status();
             saveReplyRecords();
@@ -203,24 +201,34 @@ public class CounterFragment extends Fragment {
 
             signalDao.insertInTx(signals);
 
+            if (counter == 20) {
+                counter = 1;
+            } else {
+                counter += 1;
+            }
+
         } catch (Exception e) {
             statusOnUiThread("IO_EXCEPTION: " + e.getMessage());
         }
     }
 
     private void statusOnUiThread(String msg) {
-        getActivity().runOnUiThread(() -> {
-            SpannableStringBuilder spn = new SpannableStringBuilder(msg + '\n');
-            spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            textView.append(spn);
-        });
+        if (counter == 20) {
+            getActivity().runOnUiThread(() -> {
+                SpannableStringBuilder spn = new SpannableStringBuilder(msg + '\n');
+                spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                textView.append(spn);
+            });
+        }
     }
 
     private void status() {
-        getActivity().runOnUiThread(() -> {
-            SpannableStringBuilder spn = new SpannableStringBuilder(String.format(Locale.getDefault(), "Showing %d value after 200 milliseconds", ++counter) + '\n');
-            spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            textView.append(spn);
-        });
+        if (counter == 20) {
+            getActivity().runOnUiThread(() -> {
+                SpannableStringBuilder spn = new SpannableStringBuilder(String.format(Locale.getDefault(), "Showing %dth value after 200 milliseconds", counter) + '\n');
+                spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                textView.append(spn);
+            });
+        }
     }
 }

@@ -110,7 +110,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private String strTrialNumber, strStartDate, strLastActionDate;
     private long lastTrialInsertedId = -1;
-    private int counter = 0;
+    private int counter = 1;
+    private boolean isExceptionOccured = false;
 
     public TerminalFragment() {
         broadcastReceiver = new BroadcastReceiver() {
@@ -464,7 +465,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     private void stopHandler() {
-        this.counter = 0;
         if (threadPoolExecutor != null) {
             threadPoolExecutor.shutdown();
             threadPoolExecutor = null;
@@ -790,28 +790,44 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
                 signalDao.insertInTx(signals);
 
+                if (counter >= 20) {
+                    counter = 1;
+                } else {
+                    counter += 1;
+                }
+
             } catch (InvalidProtocolBufferException e) {
-                statusOnUiThread("INVALID_PROTOCOL_BUFFER_EXCEPTION: " + e.getMessage());
+                onExceptionOccurred("INVALID_PROTOCOL_BUFFER_EXCEPTION: " + e.getMessage());
             } catch (IOException e) {
-                statusOnUiThread("IO_EXCEPTION: " + e.getMessage());
+                onExceptionOccurred("IO_EXCEPTION: " + e.getMessage());
             }
         });
     }
 
+    void onExceptionOccurred(String msg) {
+        isExceptionOccured = true;
+        statusOnUiThread(msg);
+        isExceptionOccured = false;
+    }
+
     void statusOnUiThread(String str) {
-        getActivity().runOnUiThread(() -> {
-            SpannableStringBuilder spn = new SpannableStringBuilder(str + '\n');
-            spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            receiveText.append(spn);
-        });
+        if (counter == 20 || isExceptionOccured) {
+            getActivity().runOnUiThread(() -> {
+                SpannableStringBuilder spn = new SpannableStringBuilder(str + '\n');
+                spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                receiveText.append(spn);
+            });
+        }
     }
 
     void showCounterOnScreen() {
-        getActivity().runOnUiThread(() -> {
-            SpannableStringBuilder spn = new SpannableStringBuilder(String.format(Locale.getDefault(), "Showing %d value after 200 milliseconds", ++counter) + '\n');
-            spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            receiveText.append(spn);
-        });
+        if (counter == 20) {
+            getActivity().runOnUiThread(() -> {
+                SpannableStringBuilder spn = new SpannableStringBuilder(String.format(Locale.getDefault(), "Showing %dth value after 200 milliseconds", counter) + '\n');
+                spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                receiveText.append(spn);
+            });
+        }
     }
 
     void status(String str) {

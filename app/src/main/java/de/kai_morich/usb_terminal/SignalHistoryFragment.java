@@ -93,7 +93,7 @@ public class SignalHistoryFragment extends Fragment {
         int totalPages = getTotalPageCount();
         mSignalAdapter.addAllSignals(signals);
 
-        if (currentPage <= totalPages) {
+        if (currentPage < totalPages) {
             mSignalAdapter.addLoading();
         } else {
             isLastPage = true;
