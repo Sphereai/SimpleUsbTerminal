@@ -3,6 +3,7 @@ package de.kai_morich.usb_terminal;
 import android.app.Application;
 
 import org.greenrobot.greendao.database.Database;
+import org.greenrobot.greendao.query.QueryBuilder;
 
 import de.kai_morich.usb_terminal.entities.DaoMaster;
 import de.kai_morich.usb_terminal.entities.DaoSession;

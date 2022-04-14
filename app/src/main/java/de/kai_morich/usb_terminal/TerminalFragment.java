@@ -249,6 +249,13 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        getActivity().setTitle("Terminal");
+    }
+
+    @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_terminal, menu);
         menu.findItem(R.id.hex).setChecked(hexEnabled);

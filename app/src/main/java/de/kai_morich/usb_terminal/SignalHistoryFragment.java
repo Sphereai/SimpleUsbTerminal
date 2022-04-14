@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.kai_morich.usb_terminal.adapters.SignalAdapter;
+import de.kai_morich.usb_terminal.contracts.PaginationScrollListener;
 import de.kai_morich.usb_terminal.entities.Signal;
 import de.kai_morich.usb_terminal.entities.SignalDao;
 

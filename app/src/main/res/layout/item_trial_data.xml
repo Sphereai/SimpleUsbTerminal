@@ -3,30 +3,41 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:padding="8sp">
 
     <TextView
-        android:id="@+id/number"
+        android:id="@+id/cadence"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Trial Number: "
+        android:text="Cadence: "
         android:textSize="18sp" />
 
     <TextView
-        android:id="@+id/date_started"
+        android:id="@+id/position"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Text Started: "
+        android:text="Position: "
         android:textSize="18sp" />
 
     <TextView
-        android:id="@+id/date_last_action"
+        android:id="@+id/torque"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Last Action Date: "
+        android:text="Torque: "
         android:textSize="18sp" />
 
+    <TextView
+        android:id="@+id/power"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Power: "
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Date: "
+        android:textSize="18sp" />
 
 </LinearLayout>

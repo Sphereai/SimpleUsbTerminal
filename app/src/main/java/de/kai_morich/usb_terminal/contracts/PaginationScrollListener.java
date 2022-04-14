@@ -1,4 +1,4 @@
-package de.kai_morich.usb_terminal;
+package de.kai_morich.usb_terminal.contracts;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;

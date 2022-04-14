@@ -2,6 +2,8 @@ package de.kai_morich.usb_terminal;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -17,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.kai_morich.usb_terminal.adapters.TrialAdapter;
+import de.kai_morich.usb_terminal.contracts.ItemClickListener;
+import de.kai_morich.usb_terminal.contracts.PaginationScrollListener;
 import de.kai_morich.usb_terminal.entities.Trial;
 import de.kai_morich.usb_terminal.entities.TrialDao;
 
@@ -29,9 +33,8 @@ public class TrialFragment extends Fragment {
     private int currentPage = 0;
     private boolean isLoading = false;
     private boolean isLastPage = false;
-    private TrialAdapter mTrialAdapter;
-
     private TrialDao mTrialDao;
+    private TrialAdapter mTrialAdapter;
 
     private RecyclerView mRecyclerView;
 
@@ -53,7 +56,19 @@ public class TrialFragment extends Fragment {
         mRecyclerView = view.findViewById(R.id.trial_recycler_view);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
-        mTrialAdapter = new TrialAdapter(new ArrayList<>());
+        mTrialAdapter = new TrialAdapter(new ArrayList<>(), entity -> {
+            Fragment fragment = new TrialDataFragment();
+            Bundle args = new Bundle();
+            args.putLong("trial_id", entity.getId());
+            args.putInt("trial_number", entity.getTrialNumber());
+            fragment.setArguments(args);
+
+            getActivity()
+                    .getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment, fragment, "trials")
+                    .addToBackStack(null)
+                    .commit();
+        });
         mRecyclerView.setLayoutManager(layoutManager);
         mRecyclerView.addItemDecoration(new DividerItemDecoration(mRecyclerView.getContext(), DividerItemDecoration.VERTICAL));
         mRecyclerView.setAdapter(mTrialAdapter);
@@ -78,6 +93,13 @@ public class TrialFragment extends Fragment {
         });
 
         return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        getActivity().setTitle("All Trials");
     }
 
     @Override
