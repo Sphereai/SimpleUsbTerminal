@@ -43,10 +43,14 @@ dependencies {
 
     implementation 'org.greenrobot:greendao:3.3.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'com.ajts.androidmads.SQLite2Excel:library:1.0.4'
     implementation 'io.github.ParkSangGwon:tedpermission-normal:3.3.0'
 
     implementation platform('com.google.firebase:firebase-bom:29.2.1')
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.google.firebase:firebase-analytics'
+
+    implementation group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
+    implementation group: 'org.apache.xmlbeans', name: 'xmlbeans', version: '3.1.0'
+    implementation 'javax.xml.stream:stax-api:1.0'
+    implementation 'com.fasterxml:aalto-xml:1.2.2'
 }

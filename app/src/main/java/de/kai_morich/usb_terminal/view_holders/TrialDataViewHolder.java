@@ -29,16 +29,10 @@ public class TrialDataViewHolder extends BaseViewHolder {
     }
 
     public void bind(TrialData data) {
-
-        String date = "";
-        if (data.getDate() != null) {
-            date = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(data.getDate());
-        }
-
         cadenceTV.setText(String.format(Locale.getDefault(), "Cadence: %1$,.2f", data.getCadence()));
         positionTV.setText(String.format(Locale.getDefault(),"Position: %1$,.2f", data.getPosition()));
         torqueTV.setText(String.format(Locale.getDefault(),"Torque: %1$,.2f", data.getTorque()));
         powerTV.setText(String.format(Locale.getDefault(),"Power: %1$,.2f", data.getPower()));
-        dateTV.setText(String.format("Date: %s", date));
+        dateTV.setText(String.format("Date: %s", data.getDate()));
     }
 }

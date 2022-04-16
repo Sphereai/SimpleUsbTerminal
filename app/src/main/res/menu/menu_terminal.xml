@@ -33,8 +33,4 @@
         android:id="@+id/trials"
         android:title="View Trials"
         app:showAsAction="never" />
-    <item
-        android:id="@+id/csv_export"
-        android:title="Export to csv"
-        app:showAsAction="never" />
 </menu>

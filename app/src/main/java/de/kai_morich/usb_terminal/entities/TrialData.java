@@ -7,7 +7,6 @@ import org.greenrobot.greendao.annotation.Property;
 import org.greenrobot.greendao.annotation.ToMany;
 import org.greenrobot.greendao.annotation.ToOne;
 
-import java.util.Date;
 import java.util.List;
 import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.DaoException;
@@ -46,7 +45,7 @@ public class TrialData {
     private Double power;
 
     @Property(nameInDb = "date")
-    private Date date;
+    private String date;
 
     /** Used to resolve relations */
     @Generated(hash = 2040040024)
@@ -56,9 +55,9 @@ public class TrialData {
     @Generated(hash = 463436282)
     private transient TrialDataDao myDao;
 
-    @Generated(hash = 2035947855)
+    @Generated(hash = 269496370)
     public TrialData(Long id, long trialId, int deviceId, Double cadence,
-            Double position, Double torque, Double power, Date date) {
+            Double position, Double torque, Double power, String date) {
         this.id = id;
         this.trialId = trialId;
         this.deviceId = deviceId;
@@ -129,11 +128,11 @@ public class TrialData {
         this.power = power;
     }
 
-    public Date getDate() {
+    public String getDate() {
         return this.date;
     }
 
-    public void setDate(Date date) {
+    public void setDate(String date) {
         this.date = date;
     }
 

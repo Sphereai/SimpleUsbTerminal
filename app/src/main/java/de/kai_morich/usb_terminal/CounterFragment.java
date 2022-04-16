@@ -37,6 +37,7 @@ import de.kai_morich.usb_terminal.entities.Signal;
 import de.kai_morich.usb_terminal.entities.SignalDao;
 import de.kai_morich.usb_terminal.entities.TrialData;
 import de.kai_morich.usb_terminal.entities.TrialDataDao;
+import de.kai_morich.usb_terminal.utils.DateTimeUtil;
 
 public class CounterFragment extends Fragment {
 
@@ -147,6 +148,8 @@ public class CounterFragment extends Fragment {
             TrialDataDao trialDataDao = daoSession.getTrialDataDao();
             SignalDao signalDao = daoSession.getSignalDao();
 
+            String date = DateTimeUtil.toLocalDateTime(new Date());
+
             TrialData trialData = new TrialData();
             trialData.setTrialId(1);
             trialData.setDeviceId(1212);
@@ -154,7 +157,7 @@ public class CounterFragment extends Fragment {
             trialData.setPosition(reply.getPosition());
             trialData.setTorque(reply.getTorque());
             trialData.setPower(reply.getPower());
-            trialData.setDate(new Date());
+            trialData.setDate(date);
             long lastInsertedTrialDataId = trialDataDao.insert(trialData);
 
             statusOnUiThread("******* UnsignedInt Signals *******");

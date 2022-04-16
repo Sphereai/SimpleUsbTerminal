@@ -20,7 +20,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.ajts.androidmads.library.SQLiteToExcel;
 import com.gun0912.tedpermission.PermissionListener;
 import com.gun0912.tedpermission.normal.TedPermission;
 
@@ -35,6 +34,7 @@ import de.kai_morich.usb_terminal.adapters.TrialDataAdapter;
 import de.kai_morich.usb_terminal.contracts.PaginationScrollListener;
 import de.kai_morich.usb_terminal.entities.TrialData;
 import de.kai_morich.usb_terminal.entities.TrialDataDao;
+import de.kai_morich.usb_terminal.libs.SQLiteToExcel;
 import de.kai_morich.usb_terminal.utils.CSVUtil;
 
 public class TrialDataFragment extends Fragment {
@@ -257,9 +257,15 @@ public class TrialDataFragment extends Fragment {
 
     private void exportToExcel() {
         try {
-            String dirPath = CSVUtil.getDownloadsDirectory().toString() + File.separator;
+            ArrayList<String> columnsToExclude = new ArrayList<>();
+            columnsToExclude.add("TRIAL_ID");
+            columnsToExclude.add("device_id");
+
+            String dirPath = CSVUtil.getDownloadsDirectory() + File.separator;
             SQLiteToExcel sqLiteToExcel = new SQLiteToExcel(getActivity(), "signals-db", dirPath);
-            sqLiteToExcel.exportSingleTable("trial_data", "trial_data.xls", new SQLiteToExcel.ExportListener() {
+            sqLiteToExcel.setExcludeColumns(columnsToExclude);
+
+            sqLiteToExcel.exportSingleTable("trial_data", String.format(Locale.getDefault(), "%d_trial_data.xlsx", trialNumber), new SQLiteToExcel.ExportListener() {
                 @Override
                 public void onStart() {
                     Toast.makeText(getActivity(), "Exporting Started...", Toast.LENGTH_SHORT).show();

@@ -70,6 +70,7 @@ import de.kai_morich.usb_terminal.entities.TrialDao;
 import de.kai_morich.usb_terminal.entities.TrialData;
 import de.kai_morich.usb_terminal.entities.TrialDataDao;
 import de.kai_morich.usb_terminal.utils.CSVUtil;
+import de.kai_morich.usb_terminal.utils.DateTimeUtil;
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
 
@@ -325,9 +326,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     .addToBackStack(null)
                     .commit();
             return true;
-        } else if (id == R.id.csv_export) {
-            exportSignalsToCSV();
-            return true;
         } else {
             return super.onOptionsItemSelected(item);
         }
@@ -468,7 +466,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         threadPoolExecutor.scheduleAtFixedRate(() -> {
             showCounterOnScreen();
             sendGetSignalsCommand();
-        }, 0L, 200L, TimeUnit.MILLISECONDS);
+        }, 0L, 20L, TimeUnit.MILLISECONDS);
     }
 
     private void stopHandler() {
@@ -743,6 +741,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 TrialDataDao trialDataDao = daoSession.getTrialDataDao();
                 SignalDao signalDao = daoSession.getSignalDao();
 
+                String date = DateTimeUtil.toLocalDateTime(new Date());
+
                 TrialData trialData = new TrialData();
                 trialData.setTrialId(lastTrialInsertedId);
                 trialData.setDeviceId(deviceId);
@@ -750,7 +750,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 trialData.setPosition(reply.getPosition());
                 trialData.setTorque(reply.getTorque());
                 trialData.setPower(reply.getPower());
-                trialData.setDate(new Date());
+                trialData.setDate(date);
                 long lastInsertedTrialDataId = trialDataDao.insert(trialData);
 
                 statusOnUiThread("******* UnsignedInt Signals *******");
@@ -797,7 +797,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
                 signalDao.insertInTx(signals);
 
-                if (counter >= 20) {
+                if (counter >= 100) {
                     counter = 1;
                 } else {
                     counter += 1;
@@ -818,7 +818,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     void statusOnUiThread(String str) {
-        if (counter == 20 || isExceptionOccured) {
+        if (counter == 100 || isExceptionOccured) {
             getActivity().runOnUiThread(() -> {
                 SpannableStringBuilder spn = new SpannableStringBuilder(str + '\n');
                 spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -828,7 +828,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     void showCounterOnScreen() {
-        if (counter == 20) {
+        if (counter == 100) {
             getActivity().runOnUiThread(() -> {
                 SpannableStringBuilder spn = new SpannableStringBuilder(String.format(Locale.getDefault(), "Showing %dth value after 200 milliseconds", counter) + '\n');
                 spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
