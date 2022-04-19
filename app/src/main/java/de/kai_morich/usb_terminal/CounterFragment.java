@@ -100,6 +100,14 @@ public class CounterFragment extends Fragment {
             }
             started = !started;
             return true;
+        } else if (id == R.id.view_trials) {
+            getActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment, new TrialFragment(), "trials")
+                    .addToBackStack(null)
+                    .commit();
+            return true;
         } else {
             return super.onOptionsItemSelected(item);
         }

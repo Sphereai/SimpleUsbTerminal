@@ -1,4 +1,4 @@
-package de.kai_morich.usb_terminal.libs;
+package de.kai_morich.usb_terminal.libs.excel;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -200,14 +200,6 @@ public class SQLiteToExcel {
             }
         }
         return name;
-    }
-
-    public interface ExportListener {
-        void onStart();
-
-        void onCompleted(String filePath);
-
-        void onError(Exception e);
     }
 
     /**

@@ -20,6 +20,9 @@ public class App extends Application {
         Database db = helper.getWritableDb();
 
         daoSession = new DaoMaster(db).newSession();
+
+//        QueryBuilder.LOG_SQL = true;
+//        QueryBuilder.LOG_VALUES = true;
     }
 
     public DaoSession getDaoSession() {

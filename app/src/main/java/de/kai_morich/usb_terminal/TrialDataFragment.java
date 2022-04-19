@@ -1,7 +1,7 @@
 package de.kai_morich.usb_terminal;
 
-import android.Manifest;
 import android.app.ProgressDialog;
+import android.database.Cursor;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -21,21 +21,32 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.gun0912.tedpermission.PermissionListener;
-import com.gun0912.tedpermission.normal.TedPermission;
 
+import org.greenrobot.greendao.database.Database;
+import org.greenrobot.greendao.query.LazyList;
 import org.greenrobot.greendao.query.QueryBuilder;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import de.kai_morich.usb_terminal.adapters.TrialDataAdapter;
 import de.kai_morich.usb_terminal.contracts.PaginationScrollListener;
+import de.kai_morich.usb_terminal.entities.Signal;
+import de.kai_morich.usb_terminal.entities.SignalDao;
 import de.kai_morich.usb_terminal.entities.TrialData;
 import de.kai_morich.usb_terminal.entities.TrialDataDao;
-import de.kai_morich.usb_terminal.libs.SQLiteToExcel;
+import de.kai_morich.usb_terminal.libs.excel.CellType;
+import de.kai_morich.usb_terminal.libs.excel.ExcelExporter;
+import de.kai_morich.usb_terminal.libs.excel.ExportListener;
+import de.kai_morich.usb_terminal.libs.excel.RowData;
+import de.kai_morich.usb_terminal.libs.excel.SQLiteToExcel;
 import de.kai_morich.usb_terminal.utils.CSVUtil;
+import de.kai_morich.usb_terminal.utils.PermissionManager;
 
 public class TrialDataFragment extends Fragment {
 
@@ -135,6 +146,9 @@ public class TrialDataFragment extends Fragment {
         } else if (id == R.id.excel_export) {
             exportTrialDataToExcel();
             return true;
+        } else if (id == R.id.excel_export_trial_data_signals) {
+            exportTrialDataWithSignalsToExcel();
+            return true;
         } else {
             return super.onOptionsItemSelected(item);
         }
@@ -183,6 +197,15 @@ public class TrialDataFragment extends Fragment {
         return queryBuilder.list();
     }
 
+    private LazyList<Signal> getSignalsWillTrialData() {
+
+        SignalDao signalDao = ((App) getActivity().getApplication()).getDaoSession().getSignalDao();
+        QueryBuilder<Signal> queryBuilder = signalDao.queryBuilder();
+        queryBuilder.join(SignalDao.Properties.TrialDataId, TrialData.class, TrialDataDao.Properties.Id)
+                .where(TrialDataDao.Properties.TrialId.eq(trialId));
+        return queryBuilder.build().listLazyUncached();
+    }
+
     private int getTotalPageCount() {
         QueryBuilder<TrialData> queryBuilder = trialDataDao.queryBuilder();
         queryBuilder.where(TrialDataDao.Properties.TrialId.eq(trialId));
@@ -191,40 +214,45 @@ public class TrialDataFragment extends Fragment {
     }
 
     private void exportTrialDataToCSV() {
-        TedPermission.create()
-                .setDeniedMessage("Export functionality will not be working properly without this permission\n\nPlease turn on permission from Settings.")
-                .setPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                .setPermissionListener(new PermissionListener() {
-                    @Override
-                    public void onPermissionGranted() {
-                        exportToCSV();
-                    }
+        PermissionManager.askWritePermission(new PermissionListener() {
+            @Override
+            public void onPermissionGranted() {
+                exportToCSV();
+            }
 
-                    @Override
-                    public void onPermissionDenied(List<String> deniedPermissions) {
-                        Toast.makeText(getActivity(), "Permission Denied\n" + deniedPermissions.toString(), Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .check();
+            @Override
+            public void onPermissionDenied(List<String> deniedPermissions) {
+                Toast.makeText(getActivity(), "Permission Denied\n" + deniedPermissions.toString(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void exportTrialDataToExcel() {
-        TedPermission.create()
-                .setDeniedMessage("Export functionality will not be working properly without this permission\n\nPlease turn on permission from Settings.")
-                .setPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                .setPermissionListener(new PermissionListener() {
-                    @Override
-                    public void onPermissionGranted() {
-                        exportToExcel();
-                    }
+        PermissionManager.askWritePermission(new PermissionListener() {
+            @Override
+            public void onPermissionGranted() {
+                exportToExcel();
+            }
 
-                    @Override
-                    public void onPermissionDenied(List<String> deniedPermissions) {
-                        Toast.makeText(getActivity(), "Permission Denied\n" + deniedPermissions.toString(), Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .check();
+            @Override
+            public void onPermissionDenied(List<String> deniedPermissions) {
+                Toast.makeText(getActivity(), "Permission Denied\n" + deniedPermissions.toString(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
+    private void exportTrialDataWithSignalsToExcel() {
+        PermissionManager.askWritePermission(new PermissionListener() {
+            @Override
+            public void onPermissionGranted() {
+                exportAllToExcel();
+            }
+
+            @Override
+            public void onPermissionDenied(List<String> deniedPermissions) {
+                Toast.makeText(getActivity(), "Permission Denied\n" + deniedPermissions.toString(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void exportToCSV() {
@@ -241,13 +269,9 @@ public class TrialDataFragment extends Fragment {
                 try {
                     CSVUtil.exportTrialDataToCSV(getActivity());
                 } catch (Exception e) {
-                    getActivity().runOnUiThread(() -> {
-                        Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show();
-                    });
+                    requireActivity().runOnUiThread(() -> Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show());
                 } finally {
-                    getActivity().runOnUiThread(() -> {
-                        progressDialog.dismiss();
-                    });
+                    requireActivity().runOnUiThread(progressDialog::dismiss);
                 }
             }
         };
@@ -265,7 +289,7 @@ public class TrialDataFragment extends Fragment {
             SQLiteToExcel sqLiteToExcel = new SQLiteToExcel(getActivity(), "signals-db", dirPath);
             sqLiteToExcel.setExcludeColumns(columnsToExclude);
 
-            sqLiteToExcel.exportSingleTable("trial_data", String.format(Locale.getDefault(), "%d_trial_data.xlsx", trialNumber), new SQLiteToExcel.ExportListener() {
+            sqLiteToExcel.exportSingleTable("trial_data", String.format(Locale.getDefault(), "%d_trial_data.xlsx", trialNumber), new ExportListener() {
                 @Override
                 public void onStart() {
                     Toast.makeText(getActivity(), "Exporting Started...", Toast.LENGTH_SHORT).show();
@@ -284,5 +308,64 @@ public class TrialDataFragment extends Fragment {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void exportAllToExcel() {
+
+        ProgressDialog progressDialog = new ProgressDialog(getActivity());
+        progressDialog.setTitle("Exporting to Excel File");
+        progressDialog.setMessage("Please wait...");
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressDialog.show();
+        progressDialog.setCancelable(false);
+
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                LazyList<Signal> signalLazyList = getSignalsWillTrialData();
+
+                try {
+                    if (signalLazyList.isEmpty()) {
+                        requireActivity().runOnUiThread(() -> Toast.makeText(getActivity(), "Signal records not found.", Toast.LENGTH_SHORT).show());
+                    } else {
+                        String dirPath = CSVUtil.getDownloadsDirectory() + File.separator;
+                        ExcelExporter exporter = new ExcelExporter(dirPath, String.format(Locale.getDefault(), "%d_trial_data_signals.xlsx", trialNumber), "trials_signals");
+                        exporter.addHeadersRow(new ArrayList<>(Arrays.asList("Key", "Value", "Unit", "Type", "Cadence", "Position", "Torque", "Power", "Date")));
+
+                        int rowNumber = 1;
+
+                        for (Signal signal : signalLazyList) {
+                            TrialData trialData = signal.getTrialData();
+
+                            List<RowData> cols = new ArrayList<>();
+                            cols.add(new RowData(CellType.String, signal.getKey()));
+                            cols.add(new RowData(CellType.Double, Double.valueOf(signal.getValue())));
+                            cols.add(new RowData(CellType.String, signal.getUnits()));
+                            cols.add(new RowData(CellType.String, signal.getType()));
+                            cols.add(new RowData(CellType.Double, trialData.getCadence()));
+                            cols.add(new RowData(CellType.Double, trialData.getPosition()));
+                            cols.add(new RowData(CellType.Double, trialData.getTorque()));
+                            cols.add(new RowData(CellType.Double, trialData.getPower()));
+                            cols.add(new RowData(CellType.String, trialData.getDate()));
+
+                            exporter.addRow(rowNumber, cols);
+                            rowNumber++;
+                        }
+
+                        exporter.export();
+
+                        requireActivity().runOnUiThread(() -> Toast.makeText(getActivity(), "File exported at: " + dirPath, Toast.LENGTH_LONG).show());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    requireActivity().runOnUiThread(() -> Toast.makeText(getActivity(), String.format("ERROR: %s", e.getMessage()), Toast.LENGTH_LONG).show());
+                } finally {
+                    signalLazyList.close();
+                    requireActivity().runOnUiThread(progressDialog::dismiss);
+                }
+            }
+        };
+
+        thread.start();
     }
 }

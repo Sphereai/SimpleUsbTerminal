@@ -7,4 +7,8 @@
     <item
         android:id="@+id/excel_export"
         android:title="Export to Excel" />
+
+    <item
+        android:id="@+id/excel_export_trial_data_signals"
+        android:title="Export Trial Data with Signals To Excel" />
 </menu>
