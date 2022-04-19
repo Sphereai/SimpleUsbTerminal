@@ -53,19 +53,24 @@ public class ExcelExporter {
             RowData col = columns.get(i);
             switch (col.getCellType()) {
                 case String:
-                    cell.setCellValue(new XSSFRichTextString((String) col.getData()));
+                    if (col.getData() != null)
+                        cell.setCellValue(new XSSFRichTextString((String) col.getData()));
                     break;
                 case Boolean:
-                    cell.setCellValue((boolean) col.getData());
+                    if (col.getData() != null)
+                        cell.setCellValue((boolean) col.getData());
                     break;
                 case Double:
-                    cell.setCellValue((double) col.getData());
+                    if (col.getData() != null)
+                        cell.setCellValue((double) col.getData());
                     break;
                 case Date:
-                    cell.setCellValue((Date) col.getData());
+                    if (col.getData() != null)
+                        cell.setCellValue((Date) col.getData());
                     break;
                 case Calendar:
-                    cell.setCellValue((Calendar) col.getData());
+                    if (col.getData() != null)
+                        cell.setCellValue((Calendar) col.getData());
             }
         }
     }

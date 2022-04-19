@@ -33,6 +33,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -338,20 +339,32 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         final EditText trialNumber = trialView.findViewById(R.id.trial_number);
         startDate = trialView.findViewById(R.id.start_date);
         lastActionDate = trialView.findViewById(R.id.last_action_date);
+        Button continueButton = trialView.findViewById(R.id.btn_continue);
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setIcon(R.drawable.ic_notification)
                 .setTitle("Trial Data")
                 .setView(trialView)
-                .setCancelable(false)
-                .setPositiveButton("Continue", (dialogInterface, whichButton) -> {
-                    strTrialNumber = trialNumber.getText().toString();
-                    strStartDate = startDate.getText().toString();
-                    strLastActionDate = lastActionDate.getText().toString();
+                .setCancelable(false);
 
-                    saveTrialData();
-                });
-        builder.show();
+        AlertDialog dialog = builder.create();
+
+        continueButton.setOnClickListener(view -> {
+            strTrialNumber = trialNumber.getText().toString();
+            strStartDate = startDate.getText().toString();
+            strLastActionDate = lastActionDate.getText().toString();
+
+            if (strTrialNumber.isEmpty()) {
+                Toast.makeText(getActivity(), "Please enter trial number to continue.", Toast.LENGTH_SHORT).show();
+            } else if (strStartDate.isEmpty()) {
+                Toast.makeText(getActivity(), "Please select start date to continue", Toast.LENGTH_SHORT).show();
+            } else {
+                dialog.dismiss();
+                saveTrialData();
+            }
+        });
+
+        dialog.show();
 
         hideKeyboard(startDate);
         hideKeyboard(lastActionDate);

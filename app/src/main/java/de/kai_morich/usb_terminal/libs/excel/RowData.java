@@ -6,6 +6,9 @@ public class RowData {
     private CellType cellType;
     private Object data;
 
+    public RowData() {
+    }
+
     public RowData(CellType cellType, Object data) {
         this.cellType = cellType;
         this.data = data;

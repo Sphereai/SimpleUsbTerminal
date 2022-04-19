@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.gun0912.tedpermission.PermissionListener;
 
 import org.greenrobot.greendao.database.Database;
@@ -307,6 +308,7 @@ public class TrialDataFragment extends Fragment {
             });
         } catch (Exception e) {
             e.printStackTrace();
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
     }
 
@@ -339,7 +341,7 @@ public class TrialDataFragment extends Fragment {
 
                             List<RowData> cols = new ArrayList<>();
                             cols.add(new RowData(CellType.String, signal.getKey()));
-                            cols.add(new RowData(CellType.Double, Double.valueOf(signal.getValue())));
+                            cols.add(new RowData(CellType.Double, (signal.getValue() == null || signal.getValue().isEmpty()) ? null : Double.valueOf(signal.getValue())));
                             cols.add(new RowData(CellType.String, signal.getUnits()));
                             cols.add(new RowData(CellType.String, signal.getType()));
                             cols.add(new RowData(CellType.Double, trialData.getCadence()));
@@ -358,6 +360,7 @@ public class TrialDataFragment extends Fragment {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
+                    FirebaseCrashlytics.getInstance().recordException(e);
                     requireActivity().runOnUiThread(() -> Toast.makeText(getActivity(), String.format("ERROR: %s", e.getMessage()), Toast.LENGTH_LONG).show());
                 } finally {
                     signalLazyList.close();

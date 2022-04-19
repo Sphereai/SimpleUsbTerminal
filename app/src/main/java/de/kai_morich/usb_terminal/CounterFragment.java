@@ -144,7 +144,7 @@ public class CounterFragment extends Fragment {
                 .addIntSignals(TrivelProtocol.IntSignal.newBuilder().setKey("r").setValue(13).setUnits("rpm").build())
                 .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("d").setValue(1.11).setUnits("rpm").build())
                 .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("d").setValue(1.22).setUnits("rpm").build())
-                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("d").setValue(1.33).setUnits("rpm").build())
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("d").setUnits("rpm").build())
                 .build();
     }
 
