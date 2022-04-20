@@ -72,6 +72,7 @@ import de.kai_morich.usb_terminal.entities.TrialData;
 import de.kai_morich.usb_terminal.entities.TrialDataDao;
 import de.kai_morich.usb_terminal.utils.CSVUtil;
 import de.kai_morich.usb_terminal.utils.DateTimeUtil;
+import de.kai_morich.usb_terminal.utils.TextUtil;
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
 
@@ -602,9 +603,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             outputStream.flush();
             outputStream.close();
         } catch (IOException e) {
-            getActivity().runOnUiThread(() -> {
-                onSerialIoError(e);
-            });
+            getActivity().runOnUiThread(() -> onSerialIoError(e));
         }
     }
 

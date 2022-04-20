@@ -13,7 +13,7 @@ android {
         vectorDrawables.useSupportLibrary true
         applicationId "de.kai_morich.usb_terminal"
         versionCode 1
-        versionName "1.0.1"
+        versionName "1.0.2"
         multiDexEnabled true
     }
     compileOptions {
@@ -29,7 +29,7 @@ android {
 }
 
 greendao {
-    schemaVersion 3
+    schemaVersion 4
 }
 
 dependencies {

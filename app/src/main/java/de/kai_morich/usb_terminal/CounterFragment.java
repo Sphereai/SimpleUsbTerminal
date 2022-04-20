@@ -27,8 +27,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -56,6 +58,8 @@ public class CounterFragment extends Fragment {
     private TextView textView;
     private TrivelProtocol.Reply reply;
 
+    HashMap<String, List<TrivelProtocol.Reply>> signals = new HashMap<>();
+
     public CounterFragment() {
         // Required empty public constructor
     }
@@ -64,6 +68,8 @@ public class CounterFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.seedReply();
+
+//        this.seedMultipleReplies();
     }
 
     @Override
@@ -144,7 +150,7 @@ public class CounterFragment extends Fragment {
                 .addIntSignals(TrivelProtocol.IntSignal.newBuilder().setKey("r").setValue(13).setUnits("rpm").build())
                 .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("d").setValue(1.11).setUnits("rpm").build())
                 .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("d").setValue(1.22).setUnits("rpm").build())
-                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("d").setUnits("rpm").build())
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("d").setValue(1.33).setUnits("rpm").build())
                 .build();
     }
 
@@ -241,5 +247,299 @@ public class CounterFragment extends Fragment {
                 textView.append(spn);
             });
         }
+    }
+
+    private void seedMultipleReplies() {
+
+        initializeMultipleReplies();
+
+        DaoSession daoSession = ((App) getActivity().getApplication()).getDaoSession();
+        TrialDataDao trialDataDao = daoSession.getTrialDataDao();
+        SignalDao signalDao = daoSession.getSignalDao();
+
+        List<Double> trialDataRecords = new ArrayList<>();
+        trialDataRecords.add(76.58);
+        trialDataRecords.add(76.40);
+        trialDataRecords.add(76.22);
+
+        for (int i = 1; i <= 3; i++) {
+
+            Double cadence = trialDataRecords.get(i-1);
+
+            String date = DateTimeUtil.toLocalDateTime(new Date());
+            TrialData trialData = new TrialData();
+            trialData.setTrialId(i);
+            trialData.setDeviceId(1212);
+            trialData.setCadence(cadence);
+            trialData.setPosition(0d);
+            trialData.setTorque(0d);
+            trialData.setPower(0d);
+            trialData.setDate(date);
+            long lastInsertedTrialDataId = trialDataDao.insert(trialData);
+
+            List<TrivelProtocol.Reply> replies = signals.get(String.valueOf(i));
+
+            for (TrivelProtocol.Reply r : replies) {
+
+                List<Signal> allSignals = new ArrayList<>();
+
+                statusOnUiThread("******* UnsignedInt Signals *******");
+                for (int j = 0; j < r.getUnsignedIntSignalsCount(); j++) {
+                    TrivelProtocol.UnsignedIntSignal uIntSignals = r.getUnsignedIntSignals(j);
+                    statusOnUiThread(uIntSignals.getKey() + " = " + uIntSignals.getValue() + " " + uIntSignals.getUnits());
+
+                    Signal uIntSignal = new Signal();
+                    uIntSignal.setTrialDataId(lastInsertedTrialDataId);
+                    uIntSignal.setType(Constants.SignalType.UINT);
+                    uIntSignal.setKey(uIntSignals.getKey());
+                    uIntSignal.setValue(String.valueOf(uIntSignals.getValue()));
+                    uIntSignal.setUnits(uIntSignals.getUnits());
+
+                    allSignals.add(uIntSignal);
+                }
+
+                statusOnUiThread("******* Int Signals *******");
+                for (int j = 0; j < r.getIntSignalsCount(); j++) {
+                    TrivelProtocol.IntSignal intSignals = r.getIntSignals(j);
+                    statusOnUiThread(intSignals.getKey() + " = " + intSignals.getValue() + " " + intSignals.getUnits());
+
+                    Signal intSignal = new Signal();
+                    intSignal.setTrialDataId(lastInsertedTrialDataId);
+                    intSignal.setType(Constants.SignalType.INT);
+                    intSignal.setKey(intSignals.getKey());
+                    intSignal.setValue(String.valueOf(intSignals.getValue()));
+                    intSignal.setUnits(intSignals.getUnits());
+                    allSignals.add(intSignal);
+                }
+
+                statusOnUiThread("******* Double Signals *******");
+                for (int j = 0; j < r.getDoubleSignalsCount(); j++) {
+                    TrivelProtocol.DoubleSignal doubleSignals = r.getDoubleSignals(j);
+                    statusOnUiThread(doubleSignals.getKey() + " = " + doubleSignals.getValue() + " " + doubleSignals.getUnits());
+
+                    Signal doubleSignal = new Signal();
+                    doubleSignal.setType(Constants.SignalType.DOUBLE);
+                    doubleSignal.setTrialDataId(lastInsertedTrialDataId);
+                    doubleSignal.setKey(doubleSignals.getKey());
+                    doubleSignal.setValue(String.valueOf(doubleSignals.getValue()));
+                    doubleSignal.setUnits(doubleSignals.getUnits());
+                    allSignals.add(doubleSignal);
+                }
+
+                signalDao.insertInTx(allSignals);
+            }
+        }
+    }
+
+    private void initializeMultipleReplies() {
+
+        List<TrivelProtocol.Reply> replies1 = new ArrayList<>();
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("error").setValue(0).build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("motor_error").setValue(0).build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("encoder_error").setValue(0).build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("axis_state").setValue(0).build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("app_is_running").setValue(1).build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("heartbeat_host").setValue(0).build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addIntSignals(TrivelProtocol.IntSignal.newBuilder().setKey("loop_time").setValue(27).setUnits("us").build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("vbus").setValue(0).setUnits("V").build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("iq_setpoint").setValue(0).setUnits("A").build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("iq_measured").setValue(0).setUnits("A").build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("iq_filt").setValue(0).setUnits("A").build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("pedal_torque").setValue(0).setUnits("N.m").build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("pedal_vel").setValue(0).setUnits("rpm").build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("pedal_pos").setValue(56).setUnits("deg").build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("pedal_power").setValue(0).setUnits("W").build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("encoder_pos").setValue(0).setUnits("turns").build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("encoder_vel").setValue(0).setUnits("deg/s").build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("vel_cmd").setValue(-10.212).setUnits("deg/s").build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("acc_cmd").setValue(0).setUnits("deg/s/s").build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("roadfeel").setValue(0).build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("damping").setValue(12).setUnits("%").build())
+                .build());
+        replies1.add(TrivelProtocol.Reply.newBuilder().setCadence(76.59).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("inertia").setValue(0).setUnits("%").build())
+                .build());
+
+
+        List<TrivelProtocol.Reply> replies2 = new ArrayList<>();
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("error").setValue(0).build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("motor_error").setValue(0).build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("encoder_error").setValue(0).build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("axis_state").setValue(0).build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("app_is_running").setValue(1).build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("heartbeat_host").setValue(0).build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addIntSignals(TrivelProtocol.IntSignal.newBuilder().setKey("loop_time").setValue(27).setUnits("us").build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("vbus").setValue(0).setUnits("V").build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("iq_setpoint").setValue(0).setUnits("A").build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("iq_measured").setValue(0).setUnits("A").build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("iq_filt").setValue(0).setUnits("A").build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("pedal_torque").setValue(0).setUnits("N.m").build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("pedal_vel").setValue(0).setUnits("rpm").build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("pedal_pos").setValue(56).setUnits("deg").build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("pedal_power").setValue(0).setUnits("W").build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("encoder_pos").setValue(0).setUnits("turns").build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("encoder_vel").setValue(0).setUnits("deg/s").build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("vel_cmd").setValue(-10.184).setUnits("deg/s").build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("acc_cmd").setValue(0).setUnits("deg/s/s").build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("roadfeel").setValue(0).build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("damping").setValue(12).setUnits("%").build())
+                .build());
+        replies2.add(TrivelProtocol.Reply.newBuilder().setCadence(76.38).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("inertia").setValue(0).setUnits("%").build())
+                .build());
+
+        List<TrivelProtocol.Reply> replies3 = new ArrayList<>();
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("error").setValue(0).build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("motor_error").setValue(0).build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("encoder_error").setValue(0).build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("axis_state").setValue(0).build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("app_is_running").setValue(1).build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal.newBuilder().setKey("heartbeat_host").setValue(0).build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addIntSignals(TrivelProtocol.IntSignal.newBuilder().setKey("loop_time").setValue(28).setUnits("us").build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("vbus").setValue(0).setUnits("V").build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("iq_setpoint").setValue(0).setUnits("A").build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("iq_measured").setValue(0).setUnits("A").build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("iq_filt").setValue(0).setUnits("A").build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("pedal_torque").setValue(0).setUnits("N.m").build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("pedal_vel").setValue(0).setUnits("rpm").build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("pedal_pos").setValue(56).setUnits("deg").build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("pedal_power").setValue(0).setUnits("W").build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("encoder_pos").setValue(0).setUnits("turns").build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("encoder_vel").setValue(0).setUnits("deg/s").build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("vel_cmd").setValue(-10.164).setUnits("deg/s").build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("acc_cmd").setValue(0).setUnits("deg/s/s").build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("roadfeel").setValue(0).build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("damping").setValue(12).setUnits("%").build())
+                .build());
+        replies3.add(TrivelProtocol.Reply.newBuilder().setCadence(76.23).setPosition(0).setTorque(0).setPower(0)
+                .addDoubleSignals(TrivelProtocol.DoubleSignal.newBuilder().setKey("inertia").setValue(0).setUnits("%").build())
+                .build());
+
+        signals.put("1", replies1);
+        signals.put("2", replies2);
+        signals.put("3", replies3);
     }
 }
