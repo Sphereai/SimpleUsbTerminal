@@ -641,6 +641,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             case "a":
                 TrivelProtocol.Command.Builder builder = TrivelProtocol.Command.newBuilder()
                         .setAction(TrivelProtocol.Command.Action.SetAssistedMode)
+                        .setResistanceSettings(
+                                TrivelProtocol.ResistanceSettings.newBuilder().setPostionSettingsEnable(false).build()
+                        )
                         .setAssistanceSettings(
                                 TrivelProtocol.AssistanceSettings.newBuilder().setCadence(0))
                         .setTimeOscillatorSettings(
@@ -670,9 +673,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         .setAction(TrivelProtocol.Command.Action.SetResistanceMode)
                         .setResistanceSettings(
                                 TrivelProtocol.ResistanceSettings.newBuilder()
-                                        .setDamping(0)
-                                        .setInertia(0)
-                                        .setTorque(0)
+                                        .setDamping(Constants.Resistance.DAMPING)
+                                        .setInertia(Constants.Resistance.INERTIA)
+                                        .setTorque(Constants.Resistance.TORQUE)
+                                        .setPostionSettingsEnable(false)
                                         .setPositionOscillatorSettings(
                                                 TrivelProtocol.OscillatorSettings.newBuilder()
                                                         .setGain(1)

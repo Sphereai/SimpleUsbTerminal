@@ -20,4 +20,10 @@ class Constants {
         static final String INT = "int";
         static final String DOUBLE = "double";
     }
+
+    public static class Resistance {
+        static final Double DAMPING = 0.5;
+        static final Double INERTIA = 10.0;
+        static final Double TORQUE = 0.0;
+    }
 }
