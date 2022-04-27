@@ -336,7 +336,7 @@ public class TrialDataFragment extends Fragment {
                     } else {
                         String dirPath = CSVUtil.getDownloadsDirectory() + File.separator;
                         ExcelExporter exporter = new ExcelExporter(dirPath, String.format(Locale.getDefault(), "%d_trial_data_signals.xlsx", trialNumber), "trials_signals");
-                        exporter.addHeadersRow(new ArrayList<>(Arrays.asList("date", "cadence", "position", "torque", "power", "error", "motor_error", "encoder_error", "axis_state", "app_is_running", "heartbeat_host", "loop_time (us)", "vbus", "iq_setpoint", "iq_measured", "iq_filt", "pedal_torque", "pedal_vel", "pedal_pos", "pedal_power", "encoder_pos", "encoder_vel", "vel_cmd", "acc_cmd", "roadfeel", "damping", "inertia")));
+                        exporter.addHeadersRow(new ArrayList<>(Arrays.asList("date", "cadence", "position", "torque", "power", "error", "motor_error", "encoder_error", "axis_state", "app_is_running", "heartbeat_host", "loop_time (us)", "vbus", "iq_setpoint", "iq_measured", "iq_filt", "pedal_torque", "pedal_vel", "pedal_pos", "pedal_power", "encoder_pos", "encoder_vel", "vel_cmd", "acc_cmd", "roadfeel", "damping", "inertia", "test")));
 
                         String commaSeparatedIds = de.kai_morich.usb_terminal.utils.TextUtil.toCommaSeparatedString(distinctTrialIds);
 
@@ -415,6 +415,9 @@ public class TrialDataFragment extends Fragment {
                             String strInertia = signals.get("inertia").getValue();
                             Double inertia = (strInertia == null || strInertia.isEmpty()) ? null : Double.valueOf(strInertia);
 
+                            String strTest = signals.get("test").getValue();
+                            Double test = (strTest == null || strTest.isEmpty()) ? null : Double.valueOf(strTest);
+
                             List<RowData> cols = new ArrayList<>();
                             cols.add(new RowData(CellType.String, cursor.getString(cursor.getColumnIndex("date"))));
                             cols.add(new RowData(CellType.Double, cursor.getDouble(cursor.getColumnIndex("cadence"))));
@@ -443,6 +446,7 @@ public class TrialDataFragment extends Fragment {
                             cols.add(new RowData(CellType.Double, roadFeel));
                             cols.add(new RowData(CellType.Double, damping));
                             cols.add(new RowData(CellType.Double, inertia));
+                            cols.add(new RowData(CellType.Double, test));
 
                             exporter.addRow(rowNumber, cols);
                             rowNumber++;

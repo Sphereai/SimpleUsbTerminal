@@ -276,7 +276,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 item.setIcon(R.drawable.ic_stop_white_24dp);
                 initHandler();
             }
-            startSendingGetSignals = !startSendingGetSignals;
+            startSendingGetSignals = !startSendingGetSignals;*/
             return true;
         } else if (id == R.id.clear) {
             receiveText.setText("");
@@ -649,12 +649,18 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         .setAction(TrivelProtocol.Command.Action.SetResistanceMode)
                         .setResistanceSettings(TrivelProtocol.ResistanceSettings.newBuilder()
                                 .setDamping(Constants.Resistance.DAMPING)
-                                .setInertia(Double.parseDouble(tokens[1]))
-                                .setPostionSettingsEnable(true))
+                                .setInertia(Constants.Resistance.INERTIA)
+                                .setTorque(Double.parseDouble(tokens[1]))
+                                .setPostionSettingsEnable(true)
+                                .setPositionOscillatorSettings(TrivelProtocol.OscillatorSettings.newBuilder()
+                                        .setGain(Double.parseDouble(tokens[2]))
+                                        .setPhase(Double.parseDouble(tokens[3]))
+                                )
+                        )
                         .setTimeOscillatorSettings(TrivelProtocol.OscillatorSettings.newBuilder()
                                 .setGain(Double.parseDouble(tokens[2])))
                         .setTimeOscillatorSettings(TrivelProtocol.OscillatorSettings.newBuilder()
-                                .setPhase(Double.parseDouble(tokens[3])));
+                                .setPeriod(Double.parseDouble(tokens[3])));
 
                 command = cycling_builder.build();
                 break;
@@ -666,19 +672,21 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 TrivelProtocol.Command.Builder builder = TrivelProtocol.Command.newBuilder()
                         .setAction(TrivelProtocol.Command.Action.SetAssistedMode)
                         .setResistanceSettings(
-                                TrivelProtocol.ResistanceSettings.newBuilder().setPostionSettingsEnable(false).build()
-                        )
+                                TrivelProtocol.ResistanceSettings.newBuilder().setPostionSettingsEnable(false).build())
                         .setAssistanceSettings(
                                 TrivelProtocol.AssistanceSettings.newBuilder().setCadence(0).setTimeSettingsEnable(false))
                         .setTimeOscillatorSettings(
                                 TrivelProtocol.OscillatorSettings.newBuilder().setGain(1).setPeriod(1));
 
-                if (tokens.length == 2 || tokens.length == 4) {
+                if (tokens.length == 2 ) {
                     builder.clearAssistanceSettings()
                             .setAssistanceSettings(
-                                    TrivelProtocol.AssistanceSettings.newBuilder().setCadence(Double.parseDouble(tokens[1])));
+                                    TrivelProtocol.AssistanceSettings.newBuilder().setCadence(Double.parseDouble(tokens[1])).setTimeSettingsEnable(false));
                 }
                 if (tokens.length == 4) {
+                    builder.clearAssistanceSettings()
+                            .setAssistanceSettings(
+                                    TrivelProtocol.AssistanceSettings.newBuilder().setCadence(Double.parseDouble(tokens[1])).setTimeSettingsEnable(true));
                     builder.clearTimeOscillatorSettings()
                             .setTimeOscillatorSettings(
                                     TrivelProtocol.OscillatorSettings.newBuilder()
@@ -774,7 +782,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             try {
                 List<Signal> signals = new ArrayList<>();
 
-                InputStream inputStream = new ByteArrayInputStream(data);
+                InputStream inputStream = new ByteArrayInputStream(data);  // or offset and lenght
                 TrivelProtocol.Reply reply = TrivelProtocol.Reply.parseDelimitedFrom(inputStream);
 
                 DaoSession daoSession = ((App) getActivity().getApplication()).getDaoSession();
