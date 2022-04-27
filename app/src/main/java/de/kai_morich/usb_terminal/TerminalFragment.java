@@ -577,22 +577,26 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     private void send(String str) {
-        if (connected != Connected.True) {
-            Toast.makeText(getActivity(), "not connected", Toast.LENGTH_SHORT).show();
-            return;
+        try {
+            if (connected != Connected.True) {
+                Toast.makeText(getActivity(), "not connected", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (TextUtil.isEmpty(str)) {
+                Toast.makeText(getActivity(), "Please enter command to continue", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            TrivelProtocol.Command command = createCommand(str);
+
+            if (command == null) return;
+
+            appendTextToScreen(str);
+            sendCommandToSerialPort(command);
+        } catch (Exception e) {
+            status(e.getMessage());
         }
-
-        if (TextUtil.isEmpty(str)) {
-            Toast.makeText(getActivity(), "Please enter command to continue", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        TrivelProtocol.Command command = createCommand(str);
-
-        if (command == null) return;
-
-        appendTextToScreen(str);
-        sendCommandToSerialPort(command);
     }
 
     private void sendCommandToSerialPort(TrivelProtocol.Command command) {
@@ -633,6 +637,26 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         .setRoadfeelSettings(
                                 TrivelProtocol.RoadfeelSettings.newBuilder().setGain(gain))
                         .build();
+                break;
+
+            // "cycling [torque] [gain] [phase]"
+            case "cycling":
+                if (tokens.length != 4) {
+                    throw new IllegalArgumentException("Cycling command expects 4 parameters. Command format should be 'cycling [torque] [gain] [phase]'");
+                }
+
+                TrivelProtocol.Command.Builder cycling_builder = TrivelProtocol.Command.newBuilder()
+                        .setAction(TrivelProtocol.Command.Action.SetResistanceMode)
+                        .setResistanceSettings(TrivelProtocol.ResistanceSettings.newBuilder()
+                                .setDamping(Constants.Resistance.DAMPING)
+                                .setInertia(Double.parseDouble(tokens[1]))
+                                .setPostionSettingsEnable(true))
+                        .setTimeOscillatorSettings(TrivelProtocol.OscillatorSettings.newBuilder()
+                                .setGain(Double.parseDouble(tokens[2])))
+                        .setTimeOscillatorSettings(TrivelProtocol.OscillatorSettings.newBuilder()
+                                .setPhase(Double.parseDouble(tokens[3])));
+
+                command = cycling_builder.build();
                 break;
 
             // "a"
