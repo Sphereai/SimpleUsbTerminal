@@ -276,7 +276,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 item.setIcon(R.drawable.ic_stop_white_24dp);
                 initHandler();
             }
-            startSendingGetSignals = !startSendingGetSignals;*/
+            startSendingGetSignals = !startSendingGetSignals;
             return true;
         } else if (id == R.id.clear) {
             receiveText.setText("");
