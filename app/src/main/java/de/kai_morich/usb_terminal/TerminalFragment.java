@@ -591,11 +591,13 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 break;
 
             case "road":
-                double gain = tokens.length == 2 ? Double.parseDouble(tokens[1]) : 1;
+                if (tokens.length == 2) {
+                    double Value = Double.parseDouble(tokens[1];
+                    double RoadValue = (Value<5) ? Value : 0;
                 command = TrivelProtocol.Command.newBuilder()
                         .setAction(TrivelProtocol.Command.Action.SetRoadfeel)
                         .setRoadfeelSettings(
-                                TrivelProtocol.RoadfeelSettings.newBuilder().setGain(gain))
+                                TrivelProtocol.RoadfeelSettings.newBuilder().setGain(RoadValue))
                         .build();
                 break;
 
@@ -627,14 +629,15 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
             // "a"
             // "a [cadence]"
-            // "a [cadence] [ratio period]"
+            // "a [cadence] [gain period]"
             case "a":
                 TrivelProtocol.Command.Builder builder = TrivelProtocol.Command.newBuilder()
                         .setAction(TrivelProtocol.Command.Action.SetAssistedMode)
-                        .setResistanceSettings(
-                                TrivelProtocol.ResistanceSettings.newBuilder().setPostionSettingsEnable(false).build())
-                        .setTimeOscillatorSettings(
-                                TrivelProtocol.OscillatorSettings.newBuilder().setGain(1).setPeriod(1));
+                        .setAssistanceSettings(
+                                TrivelProtocol.AssistanceSettings.newBuilder().setCadence(0).setTimeSettingsEnable(false))
+        //                .setTimeOscillatorSettings(
+                //                       TrivelProtocol.OscillatorSettings.newBuilder().setGain(1).setPeriod(1))
+                                       ;
 
                 if (tokens.length == 2 ) {
                     builder.clearAssistanceSettings()
