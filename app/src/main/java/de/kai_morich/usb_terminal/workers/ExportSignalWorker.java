@@ -285,7 +285,7 @@ public class ExportSignalWorker extends Worker {
 
     private void showProgress(int total, int value) {
         int percent = (value * 100) / total;
-        if (percent == 100) {
+        if (percent >= 99) {
             notificationUtil.setCompletion(NOTIFICATION_CONTENT_COMPLETION);
         } else {
             notificationUtil.updateProgress(percent);

@@ -828,7 +828,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     void showCounterOnScreen() {
         if (counter == 100) {
             getActivity().runOnUiThread(() -> {
-                SpannableStringBuilder spn = new SpannableStringBuilder(String.format(Locale.getDefault(), "Showing %dth value after 200 milliseconds", counter) + '\n');
+                SpannableStringBuilder spn = new SpannableStringBuilder(String.format(Locale.getDefault(), "Showing %dth value after 20 milliseconds", counter) + '\n');
                 spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 receiveText.append(spn);
             });

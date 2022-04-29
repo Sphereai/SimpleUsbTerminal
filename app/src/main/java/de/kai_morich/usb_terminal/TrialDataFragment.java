@@ -16,6 +16,9 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
 
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -34,12 +37,17 @@ import org.greenrobot.greendao.query.LazyList;
 import org.greenrobot.greendao.query.QueryBuilder;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 
 import de.kai_morich.usb_terminal.adapters.TrialDataAdapter;
@@ -150,7 +158,10 @@ public class TrialDataFragment extends Fragment {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.csv_export) {
+        if (id == R.id.backup) {
+            generateBackup();
+            return true;
+        } else if (id == R.id.csv_export) {
             exportTrialDataToCSV();
             return true;
         } else if (id == R.id.excel_export) {
@@ -221,6 +232,69 @@ public class TrialDataFragment extends Fragment {
         queryBuilder.where(TrialDataDao.Properties.TrialId.eq(trialId));
         long count = queryBuilder.count();
         return (int) Math.ceil(count / Constants.PAGE_SIZE);
+    }
+
+    private void generateBackup() {
+        PermissionManager.askWritePermission(new PermissionListener() {
+            @Override
+            public void onPermissionGranted() {
+                generateBackupAfterPermission();
+            }
+
+            @Override
+            public void onPermissionDenied(List<String> deniedPermissions) {
+                Toast.makeText(getActivity(), "Permission Denied\n" + deniedPermissions.toString(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void generateBackupAfterPermission() {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+
+        ProgressDialog progressDialog = new ProgressDialog(getActivity());
+        progressDialog.setTitle("Backing up the database");
+        progressDialog.setMessage("Please wait...");
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressDialog.show();
+        progressDialog.setCancelable(false);
+
+        executor.execute(() -> {
+            try {
+                File file = CSVUtil.getDownloadsDirectory();
+
+                if (file.canWrite()) {
+                    String currentPath = "/data/data/" + getActivity().getPackageName() + "/databases/signals-db";
+                    String copyPath = "backup-signals-db";
+                    File currentDB = new File(currentPath);
+                    File backupDB = new File(file, copyPath);
+
+                    if (currentDB.exists()) {
+                        FileChannel src = new FileInputStream(currentDB).getChannel();
+                        FileChannel dst = new FileOutputStream(backupDB).getChannel();
+                        dst.transferFrom(src, 0, src.size());
+                        src.close();
+                        dst.close();
+
+                        mainHandler.post(() -> {
+                            Toast.makeText(getActivity(), "File saved at " + backupDB.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+                        });
+                    } else {
+                        mainHandler.post(() -> {
+                            Toast.makeText(getActivity(), currentDB.getAbsolutePath() + " does not exist.", Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                } else {
+                    mainHandler.post(() -> Toast.makeText(getActivity(), "Downloads directory is not writable.", Toast.LENGTH_SHORT).show());
+                }
+            } catch (Exception e) {
+                mainHandler.post(() -> {
+                    Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            } finally {
+                mainHandler.post(progressDialog::dismiss);
+            }
+        });
     }
 
     private void exportTrialDataToCSV() {
