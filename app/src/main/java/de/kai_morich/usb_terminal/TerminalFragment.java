@@ -633,8 +633,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         .setAction(TrivelProtocol.Command.Action.SetAssistedMode)
                         .setResistanceSettings(
                                 TrivelProtocol.ResistanceSettings.newBuilder().setPostionSettingsEnable(false).build())
-                        .setAssistanceSettings(
-                                TrivelProtocol.AssistanceSettings.newBuilder().setCadence(0).setTimeSettingsEnable(false))
                         .setTimeOscillatorSettings(
                                 TrivelProtocol.OscillatorSettings.newBuilder().setGain(1).setPeriod(1));
 
