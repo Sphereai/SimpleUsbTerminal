@@ -84,80 +84,155 @@ public class ExportSignalWorker extends Worker {
                 String concatenatedString = cursor.getString(cursor.getColumnIndex("concatenated"));
                 HashMap<String, SignalModel> signals = tokenizeConcatenatedString(concatenatedString);
 
-                String strError = signals.get("error").getValue();
-                Double error = (strError == null || strError.isEmpty()) ? null : Double.valueOf(strError);
+                Double error = 0.0;
+                if (signals.get("error") != null) {
+                    String strError = signals.get("error").getValue();
+                    error = (strError == null || strError.isEmpty()) ? null : Double.valueOf(strError);
+                }
 
-                String strMotorError = signals.get("motor_error").getValue();
-                Double motorError = (strMotorError == null || strMotorError.isEmpty()) ? null : Double.valueOf(strMotorError);
+                Double motorError = 0.0;
+                if (signals.get("motor_error") != null) {
+                    String strMotorError = signals.get("motor_error").getValue();
+                    motorError = (strMotorError == null || strMotorError.isEmpty()) ? null : Double.valueOf(strMotorError);
+                }
 
-                String strEncoderError = signals.get("encoder_error").getValue();
-                Double encoderError = (strEncoderError == null || strEncoderError.isEmpty()) ? null : Double.valueOf(strEncoderError);
+                Double encoderError = 0.0;
+                if (signals.get("encoder_error") != null) {
+                    String strEncoderError = signals.get("encoder_error").getValue();
+                    encoderError = (strEncoderError == null || strEncoderError.isEmpty()) ? null : Double.valueOf(strEncoderError);
+                }
 
-                String strAxisState = signals.get("axis_state").getValue();
-                Double axisState = (strAxisState == null || strAxisState.isEmpty()) ? null : Double.valueOf(strAxisState);
+                Double axisState = 0.0;
+                if (signals.get("axis_state") != null) {
+                    String strAxisState = signals.get("axis_state").getValue();
+                    axisState = (strAxisState == null || strAxisState.isEmpty()) ? null : Double.valueOf(strAxisState);
+                }
 
-                String strAppIsRunning = signals.get("app_is_running").getValue();
-                Double appIsRunning = (strAppIsRunning == null || strAppIsRunning.isEmpty()) ? null : Double.valueOf(strAppIsRunning);
+                Double appIsRunning = 0.0;
+                if (signals.get("app_is_running") != null) {
+                    String strAppIsRunning = signals.get("app_is_running").getValue();
+                    appIsRunning = (strAppIsRunning == null || strAppIsRunning.isEmpty()) ? null : Double.valueOf(strAppIsRunning);
+                }
 
-                String strHeartBeatHost = signals.get("heartbeat_host").getValue();
-                Double heartBeatHost = (strHeartBeatHost == null || strHeartBeatHost.isEmpty()) ? null : Double.valueOf(strHeartBeatHost);
+                Double heartBeatHost = 0.0;
+                if (signals.get("heartbeat_host") != null) {
+                    String strHeartBeatHost = signals.get("heartbeat_host").getValue();
+                    heartBeatHost = (strHeartBeatHost == null || strHeartBeatHost.isEmpty()) ? null : Double.valueOf(strHeartBeatHost);
+                }
 
-                String strLoopTime = signals.get("loop_time").getValue();
-                Double loopTime = (strLoopTime == null || strLoopTime.isEmpty()) ? null : Double.valueOf(strLoopTime);
+                Double loopTime = 0.0;
+                if (signals.get("loop_time") != null) {
+                    String strLoopTime = signals.get("loop_time").getValue();
+                    loopTime = (strLoopTime == null || strLoopTime.isEmpty()) ? null : Double.valueOf(strLoopTime);
+                }
 
-                String strVBus = signals.get("vbus").getValue();
-                Double vBus = (strVBus == null || strVBus.isEmpty()) ? null : Double.valueOf(strVBus);
+                Double vBus = 0.0;
+                if (signals.get("vbus") != null) {
+                    String strVBus = signals.get("vbus").getValue();
+                    vBus = (strVBus == null || strVBus.isEmpty()) ? null : Double.valueOf(strVBus);
+                }
 
-                String strIqSetPoint = signals.get("iq_setpoint").getValue();
-                Double iqSetPoint = (strIqSetPoint == null || strIqSetPoint.isEmpty()) ? null : Double.valueOf(strIqSetPoint);
+                Double iqSetPoint = 0.0;
+                if (signals.get("iq_setpoint") != null) {
+                    String strIqSetPoint = signals.get("iq_setpoint").getValue();
+                    iqSetPoint = (strIqSetPoint == null || strIqSetPoint.isEmpty()) ? null : Double.valueOf(strIqSetPoint);
+                }
 
-                String strIqMeasured = signals.get("iq_measured").getValue();
-                Double iqMeasured = (strIqMeasured == null || strIqMeasured.isEmpty()) ? null : Double.valueOf(strIqMeasured);
+                Double iqMeasured = 0.0;
+                if (signals.get("iq_measured") != null) {
+                    String strIqMeasured = signals.get("iq_measured").getValue();
+                    iqMeasured = (strIqMeasured == null || strIqMeasured.isEmpty()) ? null : Double.valueOf(strIqMeasured);
+                }
 
-                String strIqFilt = signals.get("iq_filt").getValue();
-                Double iqFilt = (strIqFilt == null || strIqFilt.isEmpty()) ? null : Double.valueOf(strIqFilt);
+                Double iqFilt = 0.0;
+                if (signals.get("iq_filt") != null) {
+                    String strIqFilt = signals.get("iq_filt").getValue();
+                    iqFilt = (strIqFilt == null || strIqFilt.isEmpty()) ? null : Double.valueOf(strIqFilt);
+                }
 
-                String strPedalTorque = signals.get("pedal_torque").getValue();
-                Double pedalTorque = (strPedalTorque == null || strPedalTorque.isEmpty()) ? null : Double.valueOf(strPedalTorque);
+                Double pedalTorque = 0.0;
+                if (signals.get("pedal_torque") != null) {
+                    String strPedalTorque = signals.get("pedal_torque").getValue();
+                    pedalTorque = (strPedalTorque == null || strPedalTorque.isEmpty()) ? null : Double.valueOf(strPedalTorque);
+                }
 
-                String strPedalVel = signals.get("pedal_vel").getValue();
-                Double pedalVel = (strPedalVel == null || strPedalVel.isEmpty()) ? null : Double.valueOf(strPedalVel);
+                Double pedalVel = 0.0;
+                if (signals.get("pedal_vel") != null) {
+                    String strPedalVel = signals.get("pedal_vel").getValue();
+                    pedalVel = (strPedalVel == null || strPedalVel.isEmpty()) ? null : Double.valueOf(strPedalVel);
+                }
 
-                String strPedalPos = signals.get("pedal_pos").getValue();
-                Double pedalPos = (strPedalPos == null || strPedalPos.isEmpty()) ? null : Double.valueOf(strPedalPos);
+                Double pedalPos = 0.0;
+                if (signals.get("pedal_pos") != null) {
+                    String strPedalPos = signals.get("pedal_pos").getValue();
+                    pedalPos = (strPedalPos == null || strPedalPos.isEmpty()) ? null : Double.valueOf(strPedalPos);
+                }
 
-                String strPedalPower = signals.get("pedal_power").getValue();
-                Double pedalPower = (strPedalPower == null || strPedalPower.isEmpty()) ? null : Double.valueOf(strPedalPower);
+                Double pedalPower = 0.0;
+                if (signals.get("pedal_power") != null) {
+                    String strPedalPower = signals.get("pedal_power").getValue();
+                    pedalPower = (strPedalPower == null || strPedalPower.isEmpty()) ? null : Double.valueOf(strPedalPower);
+                }
 
-                String strEncoderPos = signals.get("encoder_pos").getValue();
-                Double encoderPos = (strEncoderPos == null || strEncoderPos.isEmpty()) ? null : Double.valueOf(strEncoderPos);
+                Double encoderPos = 0.0;
+                if (signals.get("encoder_pos") != null) {
+                    String strEncoderPos = signals.get("encoder_pos").getValue();
+                    encoderPos = (strEncoderPos == null || strEncoderPos.isEmpty()) ? null : Double.valueOf(strEncoderPos);
+                }
 
-                String strEncoderVel = signals.get("encoder_vel").getValue();
-                Double encoderVel = (strEncoderVel == null || strEncoderVel.isEmpty()) ? null : Double.valueOf(strEncoderVel);
+                Double encoderVel = 0.0;
+                if (signals.get("encoder_vel") != null) {
+                    String strEncoderVel = signals.get("encoder_vel").getValue();
+                    encoderVel = (strEncoderVel == null || strEncoderVel.isEmpty()) ? null : Double.valueOf(strEncoderVel);
+                }
 
-                String strVelCmd = signals.get("vel_cmd").getValue();
-                Double velCmd = (strVelCmd == null || strVelCmd.isEmpty()) ? null : Double.valueOf(strVelCmd);
+                Double velCmd = 0.0;
+                if (signals.get("vel_cmd") != null) {
+                    String strVelCmd = signals.get("vel_cmd").getValue();
+                    velCmd = (strVelCmd == null || strVelCmd.isEmpty()) ? null : Double.valueOf(strVelCmd);
+                }
 
-                String strAccCmd = signals.get("acc_cmd").getValue();
-                Double accCmd = (strAccCmd == null || strAccCmd.isEmpty()) ? null : Double.valueOf(strAccCmd);
+                Double accCmd = 0.0;
+                if (signals.get("acc_cmd") != null) {
+                    String strAccCmd = signals.get("acc_cmd").getValue();
+                    accCmd = (strAccCmd == null || strAccCmd.isEmpty()) ? null : Double.valueOf(strAccCmd);
+                }
 
-                String strRoadFeed = signals.get("roadfeel").getValue();
-                Double roadFeel = (strRoadFeed == null || strRoadFeed.isEmpty()) ? null : Double.valueOf(strRoadFeed);
+                Double roadFeel = 0.0;
+                if (signals.get("roadfeel") != null) {
+                    String strRoadFeed = signals.get("roadfeel").getValue();
+                    roadFeel = (strRoadFeed == null || strRoadFeed.isEmpty()) ? null : Double.valueOf(strRoadFeed);
+                }
 
-                String strDamping = signals.get("damping").getValue();
-                Double damping = (strDamping == null || strDamping.isEmpty()) ? null : Double.valueOf(strDamping);
+                Double damping = 0.0;
+                if (signals.get("damping") != null) {
+                    String strDamping = signals.get("damping").getValue();
+                    damping = (strDamping == null || strDamping.isEmpty()) ? null : Double.valueOf(strDamping);
+                }
 
-                String strInertia = signals.get("inertia").getValue();
-                Double inertia = (strInertia == null || strInertia.isEmpty()) ? null : Double.valueOf(strInertia);
+                Double inertia = 0.0;
+                if (signals.get("inertia") != null) {
+                    String strInertia = signals.get("inertia").getValue();
+                    inertia = (strInertia == null || strInertia.isEmpty()) ? null : Double.valueOf(strInertia);
+                }
 
-                String strTorqueCmd = signals.get("torque_cmd").getValue();
-                Double torqueCmd = (strTorqueCmd == null || strTorqueCmd.isEmpty()) ? null : Double.valueOf(strTorqueCmd);
+                Double torqueCmd = 0.0;
+                if (signals.get("torque_cmd") != null) {
+                    String strTorqueCmd = signals.get("torque_cmd").getValue();
+                    torqueCmd = (strTorqueCmd == null || strTorqueCmd.isEmpty()) ? null : Double.valueOf(strTorqueCmd);
+                }
 
-                String strTorqueSignal = signals.get("torque_signal").getValue();
-                Double torqueSignal = (strTorqueSignal == null || strTorqueSignal.isEmpty()) ? null : Double.valueOf(strTorqueSignal);
+                Double torqueSignal = 0.0;
+                if (signals.get("torque_signal") != null) {
+                    String strTorqueSignal = signals.get("torque_signal").getValue();
+                    torqueSignal = (strTorqueSignal == null || strTorqueSignal.isEmpty()) ? null : Double.valueOf(strTorqueSignal);
+                }
 
-                String strTest = signals.get("test").getValue();
-                Double test = (strTest == null || strTest.isEmpty()) ? null : Double.valueOf(strTest);
+                Double test = 0.0;
+                if (signals.get("test") != null) {
+                    String strTest = signals.get("test").getValue();
+                    test = (strTest == null || strTest.isEmpty()) ? null : Double.valueOf(strTest);
+                }
 
                 List<RowData> cols = new ArrayList<>();
                 cols.add(new RowData(CellType.String, cursor.getString(cursor.getColumnIndex("date"))));
