@@ -54,7 +54,7 @@ public class ExcelExporter {
             switch (col.getCellType()) {
                 case String:
                     if (col.getData() != null)
-                        cell.setCellValue(new XSSFRichTextString((String) col.getData()));
+                        cell.setCellValue((String) col.getData());
                     break;
                 case Boolean:
                     if (col.getData() != null)
