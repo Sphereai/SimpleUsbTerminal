@@ -15,16 +15,7 @@
         android:id="@+id/newline"
         android:title="Newline"
         app:showAsAction="never" />
-    <item
-        android:id="@+id/hex"
-        android:title="HEX Mode"
-        android:checkable="true"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/controlLines"
-        android:title="Control Lines"
-        android:checkable="true"
-        app:showAsAction="never" />
+
     <item
         android:id="@+id/sendBreak"
         android:title="Send BREAK"
