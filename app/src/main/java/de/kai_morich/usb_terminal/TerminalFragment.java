@@ -440,13 +440,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             return;
         }
 
-        stopHandler();
-
         threadPoolExecutor = new ScheduledThreadPoolExecutor(2);
-        threadPoolExecutor.scheduleAtFixedRate(() -> {
-            showCounterOnScreen();
-            sendGetSignalsCommand();
-        }, 0L, 20L, TimeUnit.MILLISECONDS);
+        threadPoolExecutor.scheduleAtFixedRate(this::sendGetSignalsCommand, 0L, 20L, TimeUnit.MILLISECONDS);
     }
 
     private void stopHandler() {
@@ -757,7 +752,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 trialData.setDate(date);
                 long lastInsertedTrialDataId = trialDataDao.insert(trialData);
 
-                statusOnUiThread("******* UnsignedInt Signals *******");
                 for (int index = 0; index < reply.getUnsignedIntSignalsCount(); index++) {
                     TrivelProtocol.UnsignedIntSignal signal = reply.getUnsignedIntSignals(index);
                     statusOnUiThread(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
@@ -771,7 +765,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     signals.add(uIntSignal);
                 }
 
-                statusOnUiThread("******* Int Signals *******");
                 for (int index = 0; index < reply.getIntSignalsCount(); index++) {
                     TrivelProtocol.IntSignal signal = reply.getIntSignals(index);
                     statusOnUiThread(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
@@ -785,7 +778,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     signals.add(intSignal);
                 }
 
-                statusOnUiThread("******* Double Signals *******");
                 for (int index = 0; index < reply.getDoubleSignalsCount(); index++) {
                     TrivelProtocol.DoubleSignal signal = reply.getDoubleSignals(index);
                     statusOnUiThread(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
