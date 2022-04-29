@@ -271,13 +271,12 @@ public class TrialDataFragment extends Fragment {
         if (distinctTrialIds.isEmpty()) {
             Toast.makeText(getActivity(), "Signal records not found.", Toast.LENGTH_SHORT).show();
         } else {
-            Constraints constraints = new Constraints.Builder().setRequiresStorageNotLow(true).setRequiresBatteryNotLow(true).build();
             Data.Builder builder = new Data.Builder();
             builder.putLong(Constants.AppKeys.KEY_TRIAL_ID, trialId);
             builder.putInt(Constants.AppKeys.KEY_TRIAL_NUMBER, trialNumber);
             Data inputData = builder.build();
 
-            WorkRequest exportSignalWorkRequest = new OneTimeWorkRequest.Builder(ExportSignalWorker.class).setConstraints(constraints).setInputData(inputData).build();
+            WorkRequest exportSignalWorkRequest = new OneTimeWorkRequest.Builder(ExportSignalWorker.class).setInputData(inputData).build();
             WorkManager.getInstance(getActivity()).enqueue(exportSignalWorkRequest);
 
             Toast.makeText(getActivity(), "Task is scheduled to export all signals. We'll notify you when task completed.", Toast.LENGTH_SHORT).show();
