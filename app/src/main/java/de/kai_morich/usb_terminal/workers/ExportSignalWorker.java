@@ -1,5 +1,6 @@
 package de.kai_morich.usb_terminal.workers;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 
@@ -55,6 +56,7 @@ public class ExportSignalWorker extends Worker {
         }
     }
 
+    @SuppressLint("Range")
     private boolean exportAllSignalsToExcel() {
 
         long trialId = getInputData().getLong(Constants.AppKeys.KEY_TRIAL_ID, 0);
@@ -67,7 +69,7 @@ public class ExportSignalWorker extends Worker {
         try {
             String dirPath = CSVUtil.getDownloadsDirectory() + File.separator;
             ExcelExporter exporter = new ExcelExporter(dirPath, String.format(Locale.getDefault(), "%d_trial_data_signals.xlsx", trialNumber), "trials_signals");
-            exporter.addHeadersRow(new ArrayList<>(Arrays.asList("date", "cadence", "position", "torque", "power", "error", "motor_error", "encoder_error", "axis_state", "app_is_running", "heartbeat_host", "loop_time (us)", "vbus", "iq_setpoint", "iq_measured", "iq_filt", "pedal_torque", "pedal_vel", "pedal_pos", "pedal_power", "encoder_pos", "encoder_vel", "vel_cmd", "acc_cmd", "roadfeel", "damping", "inertia", "test")));
+            exporter.addHeadersRow(new ArrayList<>(Arrays.asList("date", "cadence", "position", "torque", "power", "error", "motor_error", "encoder_error", "axis_state", "app_is_running", "heartbeat_host", "loop_time (us)", "vbus", "iq_setpoint", "iq_measured", "iq_filt", "pedal_torque", "pedal_vel", "pedal_pos", "pedal_power", "encoder_pos", "encoder_vel", "vel_cmd", "acc_cmd", "roadfeel", "damping", "inertia", "torque_cmd", "torque_signal", "test")));
 
             String commaSeparatedIds = de.kai_morich.usb_terminal.utils.TextUtil.toCommaSeparatedString(distinctTrialIds);
 
@@ -148,6 +150,12 @@ public class ExportSignalWorker extends Worker {
                 String strInertia = signals.get("inertia").getValue();
                 Double inertia = (strInertia == null || strInertia.isEmpty()) ? null : Double.valueOf(strInertia);
 
+                String strTorqueCmd = signals.get("torque_cmd").getValue();
+                Double torqueCmd = (strTorqueCmd == null || strTorqueCmd.isEmpty()) ? null : Double.valueOf(strTorqueCmd);
+
+                String strTorqueSignal = signals.get("torque_signal").getValue();
+                Double torqueSignal = (strTorqueSignal == null || strTorqueSignal.isEmpty()) ? null : Double.valueOf(strTorqueSignal);
+
                 String strTest = signals.get("test").getValue();
                 Double test = (strTest == null || strTest.isEmpty()) ? null : Double.valueOf(strTest);
 
@@ -179,6 +187,8 @@ public class ExportSignalWorker extends Worker {
                 cols.add(new RowData(CellType.Double, roadFeel));
                 cols.add(new RowData(CellType.Double, damping));
                 cols.add(new RowData(CellType.Double, inertia));
+                cols.add(new RowData(CellType.Double, torqueCmd));
+                cols.add(new RowData(CellType.Double, torqueSignal));
                 cols.add(new RowData(CellType.Double, test));
 
                 exporter.addRow(rowNumber, cols);
@@ -191,12 +201,10 @@ public class ExportSignalWorker extends Worker {
             exporter.export();
 
             return true;
-//                requireActivity().runOnUiThread(() -> Toast.makeText(getActivity(), "File exported at: " + dirPath, Toast.LENGTH_LONG).show());
         } catch (Exception e) {
             e.printStackTrace();
             FirebaseCrashlytics.getInstance().recordException(e);
             return false;
-//            requireActivity().runOnUiThread(() -> Toast.makeText(getActivity(), String.format("ERROR: %s", e.getMessage()), Toast.LENGTH_LONG).show());
         }
     }
 

@@ -42,7 +42,7 @@ public class DevicesFragment extends ListFragment {
 
     private final ArrayList<ListItem> listItems = new ArrayList<>();
     private ArrayAdapter<ListItem> listAdapter;
-    private int baudRate = 19200;
+    private int baudRate = 11520;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -102,11 +102,9 @@ public class DevicesFragment extends ListFragment {
             int pos = java.util.Arrays.asList(baudRates).indexOf(String.valueOf(baudRate));
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
             builder.setTitle("Baud rate");
-            builder.setSingleChoiceItems(baudRates, pos, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int item) {
-                    baudRate = Integer.parseInt(baudRates[item]);
-                    dialog.dismiss();
-                }
+            builder.setSingleChoiceItems(baudRates, pos, (dialog, item1) -> {
+                baudRate = Integer.parseInt(baudRates[item1]);
+                dialog.dismiss();
             });
             builder.create().show();
             return true;
