@@ -45,6 +45,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
@@ -853,8 +854,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
             } catch (InvalidProtocolBufferException e) {
                 onExceptionOccurred("INVALID_PROTOCOL_BUFFER_EXCEPTION: " + e.getMessage());
+                FirebaseCrashlytics.getInstance().recordException(e);
             } catch (IOException e) {
                 onExceptionOccurred("IO_EXCEPTION: " + e.getMessage());
+                FirebaseCrashlytics.getInstance().recordException(e);
             }
         });
     }
