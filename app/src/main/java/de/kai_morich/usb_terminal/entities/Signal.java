@@ -2,39 +2,98 @@ package de.kai_morich.usb_terminal.entities;
 
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Id;
-import org.greenrobot.greendao.annotation.NotNull;
 import org.greenrobot.greendao.annotation.Property;
 import org.greenrobot.greendao.annotation.ToOne;
 import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.DaoException;
+import org.greenrobot.greendao.annotation.NotNull;
 
 @Entity(nameInDb = "signals")
 public class Signal {
-
     @Id(autoincrement = true)
     @Property(nameInDb = "id")
     private Long id;
 
+    @Property(nameInDb = "trial_data_id")
     private long trialDataId;
 
     @ToOne(joinProperty = "trialDataId")
     private TrialData trialData;
 
-    @NotNull
-    @Property(nameInDb = "type")
-    private String type;
+    @Property(nameInDb = "loop_time")
+    private Integer loopTime;
 
-    @NotNull
-    @Property(nameInDb = "key")
-    private String key;
+    @Property(nameInDb = "error")
+    private Integer error;
 
-    @NotNull
-    @Property(nameInDb = "value")
-    private String value;
+    @Property(nameInDb = "motor_error")
+    private Integer motorError;
 
-    @NotNull
-    @Property(nameInDb = "units")
-    private String units;
+    @Property(nameInDb = "encoder_error")
+    private Integer encoderError;
+
+    @Property(nameInDb = "axis_state")
+    private Integer axisState;
+
+    @Property(nameInDb = "app_is_running")
+    private Integer appIsRunning;
+
+    @Property(nameInDb = "heartbeat_host")
+    private Integer heartBeatHost;
+
+    @Property(nameInDb = "vbus")
+    private Double vbus;
+
+    @Property(nameInDb = "iq_setpoint")
+    private Double iqSetpoint;
+
+    @Property(nameInDb = "iq_measured")
+    private Double iqMeasured;
+
+    @Property(nameInDb = "iq_filt")
+    private Double iqFilt;
+
+    @Property(nameInDb = "pedal_torque")
+    private Double pedalTorque;
+
+    @Property(nameInDb = "pedal_vel")
+    private Double pedalVel;
+
+    @Property(nameInDb = "pedal_pos")
+    private Double pedalPos;
+
+    @Property(nameInDb = "pedal_power")
+    private Double pedalPower;
+
+    @Property(nameInDb = "encoder_pos")
+    private Double encoderPos;
+
+    @Property(nameInDb = "encoder_vel")
+    private Double encoderVel;
+
+    @Property(nameInDb = "vel_cmd")
+    private Double velCmd;
+
+    @Property(nameInDb = "acc_cmd")
+    private Double accCmd;
+
+    @Property(nameInDb = "torque_cmd")
+    private Double torqueCmd;
+
+    @Property(nameInDb = "roadfeel")
+    private Double roadFeel;
+
+    @Property(nameInDb = "damping")
+    private Double damping;
+
+    @Property(nameInDb = "inertia")
+    private Double inertia;
+
+    @Property(nameInDb = "torque_signal")
+    private Double torqueSignal;
+
+    @Property(nameInDb = "test")
+    private Double test;
 
     /** Used to resolve relations */
     @Generated(hash = 2040040024)
@@ -44,15 +103,42 @@ public class Signal {
     @Generated(hash = 51506229)
     private transient SignalDao myDao;
 
-    @Generated(hash = 2124423585)
-    public Signal(Long id, long trialDataId, @NotNull String type,
-            @NotNull String key, @NotNull String value, @NotNull String units) {
+    @Generated(hash = 1958328048)
+    public Signal(Long id, long trialDataId, Integer loopTime, Integer error,
+            Integer motorError, Integer encoderError, Integer axisState,
+            Integer appIsRunning, Integer heartBeatHost, Double vbus,
+            Double iqSetpoint, Double iqMeasured, Double iqFilt, Double pedalTorque,
+            Double pedalVel, Double pedalPos, Double pedalPower, Double encoderPos,
+            Double encoderVel, Double velCmd, Double accCmd, Double torqueCmd,
+            Double roadFeel, Double damping, Double inertia, Double torqueSignal,
+            Double test) {
         this.id = id;
         this.trialDataId = trialDataId;
-        this.type = type;
-        this.key = key;
-        this.value = value;
-        this.units = units;
+        this.loopTime = loopTime;
+        this.error = error;
+        this.motorError = motorError;
+        this.encoderError = encoderError;
+        this.axisState = axisState;
+        this.appIsRunning = appIsRunning;
+        this.heartBeatHost = heartBeatHost;
+        this.vbus = vbus;
+        this.iqSetpoint = iqSetpoint;
+        this.iqMeasured = iqMeasured;
+        this.iqFilt = iqFilt;
+        this.pedalTorque = pedalTorque;
+        this.pedalVel = pedalVel;
+        this.pedalPos = pedalPos;
+        this.pedalPower = pedalPower;
+        this.encoderPos = encoderPos;
+        this.encoderVel = encoderVel;
+        this.velCmd = velCmd;
+        this.accCmd = accCmd;
+        this.torqueCmd = torqueCmd;
+        this.roadFeel = roadFeel;
+        this.damping = damping;
+        this.inertia = inertia;
+        this.torqueSignal = torqueSignal;
+        this.test = test;
     }
 
     @Generated(hash = 783005292)
@@ -75,36 +161,204 @@ public class Signal {
         this.trialDataId = trialDataId;
     }
 
-    public String getType() {
-        return this.type;
+    public Integer getLoopTime() {
+        return this.loopTime;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setLoopTime(Integer loopTime) {
+        this.loopTime = loopTime;
     }
 
-    public String getKey() {
-        return this.key;
+    public Integer getError() {
+        return this.error;
     }
 
-    public void setKey(String key) {
-        this.key = key;
+    public void setError(Integer error) {
+        this.error = error;
     }
 
-    public String getValue() {
-        return this.value;
+    public Integer getMotorError() {
+        return this.motorError;
     }
 
-    public void setValue(String value) {
-        this.value = value;
+    public void setMotorError(Integer motorError) {
+        this.motorError = motorError;
     }
 
-    public String getUnits() {
-        return this.units;
+    public Integer getEncoderError() {
+        return this.encoderError;
     }
 
-    public void setUnits(String units) {
-        this.units = units;
+    public void setEncoderError(Integer encoderError) {
+        this.encoderError = encoderError;
+    }
+
+    public Integer getAxisState() {
+        return this.axisState;
+    }
+
+    public void setAxisState(Integer axisState) {
+        this.axisState = axisState;
+    }
+
+    public Integer getAppIsRunning() {
+        return this.appIsRunning;
+    }
+
+    public void setAppIsRunning(Integer appIsRunning) {
+        this.appIsRunning = appIsRunning;
+    }
+
+    public Integer getHeartBeatHost() {
+        return this.heartBeatHost;
+    }
+
+    public void setHeartBeatHost(Integer heartBeatHost) {
+        this.heartBeatHost = heartBeatHost;
+    }
+
+    public Double getVbus() {
+        return this.vbus;
+    }
+
+    public void setVbus(Double vbus) {
+        this.vbus = vbus;
+    }
+
+    public Double getIqSetpoint() {
+        return this.iqSetpoint;
+    }
+
+    public void setIqSetpoint(Double iqSetpoint) {
+        this.iqSetpoint = iqSetpoint;
+    }
+
+    public Double getIqMeasured() {
+        return this.iqMeasured;
+    }
+
+    public void setIqMeasured(Double iqMeasured) {
+        this.iqMeasured = iqMeasured;
+    }
+
+    public Double getIqFilt() {
+        return this.iqFilt;
+    }
+
+    public void setIqFilt(Double iqFilt) {
+        this.iqFilt = iqFilt;
+    }
+
+    public Double getPedalTorque() {
+        return this.pedalTorque;
+    }
+
+    public void setPedalTorque(Double pedalTorque) {
+        this.pedalTorque = pedalTorque;
+    }
+
+    public Double getPedalVel() {
+        return this.pedalVel;
+    }
+
+    public void setPedalVel(Double pedalVel) {
+        this.pedalVel = pedalVel;
+    }
+
+    public Double getPedalPos() {
+        return this.pedalPos;
+    }
+
+    public void setPedalPos(Double pedalPos) {
+        this.pedalPos = pedalPos;
+    }
+
+    public Double getPedalPower() {
+        return this.pedalPower;
+    }
+
+    public void setPedalPower(Double pedalPower) {
+        this.pedalPower = pedalPower;
+    }
+
+    public Double getEncoderPos() {
+        return this.encoderPos;
+    }
+
+    public void setEncoderPos(Double encoderPos) {
+        this.encoderPos = encoderPos;
+    }
+
+    public Double getEncoderVel() {
+        return this.encoderVel;
+    }
+
+    public void setEncoderVel(Double encoderVel) {
+        this.encoderVel = encoderVel;
+    }
+
+    public Double getVelCmd() {
+        return this.velCmd;
+    }
+
+    public void setVelCmd(Double velCmd) {
+        this.velCmd = velCmd;
+    }
+
+    public Double getAccCmd() {
+        return this.accCmd;
+    }
+
+    public void setAccCmd(Double accCmd) {
+        this.accCmd = accCmd;
+    }
+
+    public Double getTorqueCmd() {
+        return this.torqueCmd;
+    }
+
+    public void setTorqueCmd(Double torqueCmd) {
+        this.torqueCmd = torqueCmd;
+    }
+
+    public Double getRoadFeel() {
+        return this.roadFeel;
+    }
+
+    public void setRoadFeel(Double roadFeel) {
+        this.roadFeel = roadFeel;
+    }
+
+    public Double getDamping() {
+        return this.damping;
+    }
+
+    public void setDamping(Double damping) {
+        this.damping = damping;
+    }
+
+    public Double getInertia() {
+        return this.inertia;
+    }
+
+    public void setInertia(Double inertia) {
+        this.inertia = inertia;
+    }
+
+    public Double getTorqueSignal() {
+        return this.torqueSignal;
+    }
+
+    public void setTorqueSignal(Double torqueSignal) {
+        this.torqueSignal = torqueSignal;
+    }
+
+    public Double getTest() {
+        return this.test;
+    }
+
+    public void setTest(Double test) {
+        this.test = test;
     }
 
     @Generated(hash = 678545556)

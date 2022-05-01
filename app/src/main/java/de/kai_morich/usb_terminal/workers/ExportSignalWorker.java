@@ -10,8 +10,6 @@ import androidx.work.WorkerParameters;
 
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
-import org.greenrobot.greendao.database.Database;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,6 +36,37 @@ public class ExportSignalWorker extends Worker {
     private static final String NOTIFICATION_CONTENT = "Please wait...";
     private static final String NOTIFICATION_CONTENT_COMPLETION = "Exporting Complete";
 
+    private int dateIndex;
+    private int cadenceIndex;
+    private int positionIndex;
+    private int torqueIndex;
+    private int powerIndex;
+    private int errorIndex;
+    private int motorErrorIndex;
+    private int encoderErrorIndex;
+    private int axisStateIndex;
+    private int appIsRunningIndex;
+    private int heartbeatHostIndex;
+    private int loopTimeIndex;
+    private int vbusIndex;
+    private int iqSetpointIndex;
+    private int iqMeasuredIndex;
+    private int iqFiltIndex;
+    private int pedalTorqueIndex;
+    private int pedalVelIndex;
+    private int pedalPosIndex;
+    private int pedalPowerIndex;
+    private int encoderPosIndex;
+    private int encoderVelIndex;
+    private int velCmdIndex;
+    private int accCmdIndex;
+    private int roadfeelIndex;
+    private int dampingIndex;
+    private int inertiaIndex;
+    private int torqueCmdIndex;
+    private int torqueSignalIndex;
+    private int testIndex;
+
     public ExportSignalWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         this.context = context;
@@ -59,253 +88,112 @@ public class ExportSignalWorker extends Worker {
     @SuppressLint("Range")
     private boolean exportAllSignalsToExcel() {
 
+        boolean status = false;
         long trialId = getInputData().getLong(Constants.AppKeys.KEY_TRIAL_ID, 0);
         int trialNumber = getInputData().getInt(Constants.AppKeys.KEY_TRIAL_NUMBER, 0);
 
         App app = (App) context.getApplicationContext();
-        List<Integer> distinctTrialIds = DatabaseManager.getDistinctTrialDataIdFromSignals(app, trialId);
-
+        Cursor cursor = DatabaseManager.getSignalsQuery(app, trialId);
 
         try {
             String dirPath = CSVUtil.getDownloadsDirectory() + File.separator;
             ExcelExporter exporter = new ExcelExporter(dirPath, String.format(Locale.getDefault(), "%d_trial_data_signals.xlsx", trialNumber), "trials_signals");
             exporter.addHeadersRow(new ArrayList<>(Arrays.asList("date", "cadence", "position", "torque", "power", "error", "motor_error", "encoder_error", "axis_state", "app_is_running", "heartbeat_host", "loop_time (us)", "vbus", "iq_setpoint", "iq_measured", "iq_filt", "pedal_torque", "pedal_vel", "pedal_pos", "pedal_power", "encoder_pos", "encoder_vel", "vel_cmd", "acc_cmd", "roadfeel", "damping", "inertia", "torque_cmd", "torque_signal", "test")));
-
-            String commaSeparatedIds = de.kai_morich.usb_terminal.utils.TextUtil.toCommaSeparatedString(distinctTrialIds);
-
-            Database database = app.getDaoSession().getDatabase();
-            String query = String.format("SELECT TRIAL_DATA_ID, TD.cadence, TD.position, TD.torque, TD.power, TD.date, group_concat(concat) AS concatenated FROM (SELECT TRIAL_DATA_ID, key || '|' || value || '|' || units as concat FROM signals) AS S INNER JOIN trial_data AS TD ON S.TRIAL_DATA_ID = TD.id WHERE TRIAL_DATA_ID IN (%s) GROUP BY TRIAL_DATA_ID", commaSeparatedIds);
-            Cursor cursor = database.rawQuery(query, null);
+            setCursorIndex(cursor);
 
             int rowNumber = 1;
             int count = cursor.getCount();
 
             while (cursor.moveToNext()) {
-                String concatenatedString = cursor.getString(cursor.getColumnIndex("concatenated"));
-                HashMap<String, SignalModel> signals = tokenizeConcatenatedString(concatenatedString);
-
-                Double error = 0.0;
-                if (signals.get("error") != null) {
-                    String strError = signals.get("error").getValue();
-                    error = (strError == null || strError.isEmpty()) ? null : Double.valueOf(strError);
-                }
-
-                Double motorError = 0.0;
-                if (signals.get("motor_error") != null) {
-                    String strMotorError = signals.get("motor_error").getValue();
-                    motorError = (strMotorError == null || strMotorError.isEmpty()) ? null : Double.valueOf(strMotorError);
-                }
-
-                Double encoderError = 0.0;
-                if (signals.get("encoder_error") != null) {
-                    String strEncoderError = signals.get("encoder_error").getValue();
-                    encoderError = (strEncoderError == null || strEncoderError.isEmpty()) ? null : Double.valueOf(strEncoderError);
-                }
-
-                Double axisState = 0.0;
-                if (signals.get("axis_state") != null) {
-                    String strAxisState = signals.get("axis_state").getValue();
-                    axisState = (strAxisState == null || strAxisState.isEmpty()) ? null : Double.valueOf(strAxisState);
-                }
-
-                Double appIsRunning = 0.0;
-                if (signals.get("app_is_running") != null) {
-                    String strAppIsRunning = signals.get("app_is_running").getValue();
-                    appIsRunning = (strAppIsRunning == null || strAppIsRunning.isEmpty()) ? null : Double.valueOf(strAppIsRunning);
-                }
-
-                Double heartBeatHost = 0.0;
-                if (signals.get("heartbeat_host") != null) {
-                    String strHeartBeatHost = signals.get("heartbeat_host").getValue();
-                    heartBeatHost = (strHeartBeatHost == null || strHeartBeatHost.isEmpty()) ? null : Double.valueOf(strHeartBeatHost);
-                }
-
-                Double loopTime = 0.0;
-                if (signals.get("loop_time") != null) {
-                    String strLoopTime = signals.get("loop_time").getValue();
-                    loopTime = (strLoopTime == null || strLoopTime.isEmpty()) ? null : Double.valueOf(strLoopTime);
-                }
-
-                Double vBus = 0.0;
-                if (signals.get("vbus") != null) {
-                    String strVBus = signals.get("vbus").getValue();
-                    vBus = (strVBus == null || strVBus.isEmpty()) ? null : Double.valueOf(strVBus);
-                }
-
-                Double iqSetPoint = 0.0;
-                if (signals.get("iq_setpoint") != null) {
-                    String strIqSetPoint = signals.get("iq_setpoint").getValue();
-                    iqSetPoint = (strIqSetPoint == null || strIqSetPoint.isEmpty()) ? null : Double.valueOf(strIqSetPoint);
-                }
-
-                Double iqMeasured = 0.0;
-                if (signals.get("iq_measured") != null) {
-                    String strIqMeasured = signals.get("iq_measured").getValue();
-                    iqMeasured = (strIqMeasured == null || strIqMeasured.isEmpty()) ? null : Double.valueOf(strIqMeasured);
-                }
-
-                Double iqFilt = 0.0;
-                if (signals.get("iq_filt") != null) {
-                    String strIqFilt = signals.get("iq_filt").getValue();
-                    iqFilt = (strIqFilt == null || strIqFilt.isEmpty()) ? null : Double.valueOf(strIqFilt);
-                }
-
-                Double pedalTorque = 0.0;
-                if (signals.get("pedal_torque") != null) {
-                    String strPedalTorque = signals.get("pedal_torque").getValue();
-                    pedalTorque = (strPedalTorque == null || strPedalTorque.isEmpty()) ? null : Double.valueOf(strPedalTorque);
-                }
-
-                Double pedalVel = 0.0;
-                if (signals.get("pedal_vel") != null) {
-                    String strPedalVel = signals.get("pedal_vel").getValue();
-                    pedalVel = (strPedalVel == null || strPedalVel.isEmpty()) ? null : Double.valueOf(strPedalVel);
-                }
-
-                Double pedalPos = 0.0;
-                if (signals.get("pedal_pos") != null) {
-                    String strPedalPos = signals.get("pedal_pos").getValue();
-                    pedalPos = (strPedalPos == null || strPedalPos.isEmpty()) ? null : Double.valueOf(strPedalPos);
-                }
-
-                Double pedalPower = 0.0;
-                if (signals.get("pedal_power") != null) {
-                    String strPedalPower = signals.get("pedal_power").getValue();
-                    pedalPower = (strPedalPower == null || strPedalPower.isEmpty()) ? null : Double.valueOf(strPedalPower);
-                }
-
-                Double encoderPos = 0.0;
-                if (signals.get("encoder_pos") != null) {
-                    String strEncoderPos = signals.get("encoder_pos").getValue();
-                    encoderPos = (strEncoderPos == null || strEncoderPos.isEmpty()) ? null : Double.valueOf(strEncoderPos);
-                }
-
-                Double encoderVel = 0.0;
-                if (signals.get("encoder_vel") != null) {
-                    String strEncoderVel = signals.get("encoder_vel").getValue();
-                    encoderVel = (strEncoderVel == null || strEncoderVel.isEmpty()) ? null : Double.valueOf(strEncoderVel);
-                }
-
-                Double velCmd = 0.0;
-                if (signals.get("vel_cmd") != null) {
-                    String strVelCmd = signals.get("vel_cmd").getValue();
-                    velCmd = (strVelCmd == null || strVelCmd.isEmpty()) ? null : Double.valueOf(strVelCmd);
-                }
-
-                Double accCmd = 0.0;
-                if (signals.get("acc_cmd") != null) {
-                    String strAccCmd = signals.get("acc_cmd").getValue();
-                    accCmd = (strAccCmd == null || strAccCmd.isEmpty()) ? null : Double.valueOf(strAccCmd);
-                }
-
-                Double roadFeel = 0.0;
-                if (signals.get("roadfeel") != null) {
-                    String strRoadFeed = signals.get("roadfeel").getValue();
-                    roadFeel = (strRoadFeed == null || strRoadFeed.isEmpty()) ? null : Double.valueOf(strRoadFeed);
-                }
-
-                Double damping = 0.0;
-                if (signals.get("damping") != null) {
-                    String strDamping = signals.get("damping").getValue();
-                    damping = (strDamping == null || strDamping.isEmpty()) ? null : Double.valueOf(strDamping);
-                }
-
-                Double inertia = 0.0;
-                if (signals.get("inertia") != null) {
-                    String strInertia = signals.get("inertia").getValue();
-                    inertia = (strInertia == null || strInertia.isEmpty()) ? null : Double.valueOf(strInertia);
-                }
-
-                Double torqueCmd = 0.0;
-                if (signals.get("torque_cmd") != null) {
-                    String strTorqueCmd = signals.get("torque_cmd").getValue();
-                    torqueCmd = (strTorqueCmd == null || strTorqueCmd.isEmpty()) ? null : Double.valueOf(strTorqueCmd);
-                }
-
-                Double torqueSignal = 0.0;
-                if (signals.get("torque_signal") != null) {
-                    String strTorqueSignal = signals.get("torque_signal").getValue();
-                    torqueSignal = (strTorqueSignal == null || strTorqueSignal.isEmpty()) ? null : Double.valueOf(strTorqueSignal);
-                }
-
-                Double test = 0.0;
-                if (signals.get("test") != null) {
-                    String strTest = signals.get("test").getValue();
-                    test = (strTest == null || strTest.isEmpty()) ? null : Double.valueOf(strTest);
-                }
-
                 List<RowData> cols = new ArrayList<>();
-                cols.add(new RowData(CellType.String, cursor.getString(cursor.getColumnIndex("date"))));
-                cols.add(new RowData(CellType.Double, cursor.getDouble(cursor.getColumnIndex("cadence"))));
-                cols.add(new RowData(CellType.Double, cursor.getDouble(cursor.getColumnIndex("position"))));
-                cols.add(new RowData(CellType.Double, cursor.getDouble(cursor.getColumnIndex("torque"))));
-                cols.add(new RowData(CellType.Double, cursor.getDouble(cursor.getColumnIndex("power"))));
-                cols.add(new RowData(CellType.Double, error));
-                cols.add(new RowData(CellType.Double, motorError));
-                cols.add(new RowData(CellType.Double, encoderError));
-                cols.add(new RowData(CellType.Double, axisState));
-                cols.add(new RowData(CellType.Double, appIsRunning));
-                cols.add(new RowData(CellType.Double, heartBeatHost));
-                cols.add(new RowData(CellType.Double, loopTime));
-                cols.add(new RowData(CellType.Double, vBus));
-                cols.add(new RowData(CellType.Double, iqSetPoint));
-                cols.add(new RowData(CellType.Double, iqMeasured));
-                cols.add(new RowData(CellType.Double, iqFilt));
-                cols.add(new RowData(CellType.Double, pedalTorque));
-                cols.add(new RowData(CellType.Double, pedalVel));
-                cols.add(new RowData(CellType.Double, pedalPos));
-                cols.add(new RowData(CellType.Double, pedalPower));
-                cols.add(new RowData(CellType.Double, encoderPos));
-                cols.add(new RowData(CellType.Double, encoderVel));
-                cols.add(new RowData(CellType.Double, velCmd));
-                cols.add(new RowData(CellType.Double, accCmd));
-                cols.add(new RowData(CellType.Double, roadFeel));
-                cols.add(new RowData(CellType.Double, damping));
-                cols.add(new RowData(CellType.Double, inertia));
-                cols.add(new RowData(CellType.Double, torqueCmd));
-                cols.add(new RowData(CellType.Double, torqueSignal));
-                cols.add(new RowData(CellType.Double, test));
+                cols.add(new RowData(CellType.String, cursor.isNull(dateIndex) ? null : cursor.getString(dateIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(cadenceIndex) ? null : cursor.getDouble(cadenceIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(positionIndex) ? null : cursor.getDouble(positionIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(torqueIndex) ? null : cursor.getDouble(torqueIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(powerIndex) ? null : cursor.getDouble(powerIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(errorIndex) ? null : (double) cursor.getInt(errorIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(motorErrorIndex) ? null : (double) cursor.getInt(motorErrorIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(encoderErrorIndex) ? null : (double) cursor.getInt(encoderErrorIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(axisStateIndex) ? null : (double) cursor.getInt(axisStateIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(appIsRunningIndex) ? null : (double) cursor.getInt(appIsRunningIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(heartbeatHostIndex) ? null : (double) cursor.getInt(heartbeatHostIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(loopTimeIndex) ? null : (double) cursor.getInt(loopTimeIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(vbusIndex) ? null : cursor.getDouble(vbusIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(iqSetpointIndex) ? null : cursor.getDouble(iqSetpointIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(iqMeasuredIndex) ? null : cursor.getDouble(iqMeasuredIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(iqFiltIndex) ? null : cursor.getDouble(iqFiltIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(pedalTorqueIndex) ? null : cursor.getDouble(pedalTorqueIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(pedalVelIndex) ? null : cursor.getDouble(pedalVelIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(pedalPosIndex) ? null : cursor.getDouble(pedalPosIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(pedalPowerIndex) ? null : cursor.getDouble(pedalPowerIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(encoderPosIndex) ? null : cursor.getDouble(encoderPosIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(encoderVelIndex) ? null : cursor.getDouble(encoderVelIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(velCmdIndex) ? null : cursor.getDouble(velCmdIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(accCmdIndex) ? null : cursor.getDouble(accCmdIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(roadfeelIndex) ? null : cursor.getDouble(roadfeelIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(dampingIndex) ? null : cursor.getDouble(dampingIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(inertiaIndex) ? null : cursor.getDouble(inertiaIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(torqueCmdIndex) ? null : cursor.getDouble(torqueCmdIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(torqueSignalIndex) ? null : cursor.getDouble(torqueSignalIndex)));
+                cols.add(new RowData(CellType.Double, cursor.isNull(testIndex) ? null : cursor.getDouble(testIndex)));
 
                 exporter.addRow(rowNumber, cols);
 
                 showProgress(count, rowNumber);
                 rowNumber++;
             }
-            cursor.close();
 
             exporter.export();
+            status = true;
 
-            return true;
         } catch (Exception e) {
             e.printStackTrace();
             FirebaseCrashlytics.getInstance().recordException(e);
-            return false;
+        } finally {
+            cursor.close();
         }
+
+        return status;
     }
 
-    private void showProgress(int total, int value) {
-        int percent = (value * 100) / total;
-        if (percent >= 99) {
+    private void showProgress(int total, int progress) {
+        if (progress == total) {
             notificationUtil.setCompletion(NOTIFICATION_CONTENT_COMPLETION);
         } else {
-            notificationUtil.updateProgress(percent);
+            notificationUtil.updateProgress(total, progress);
         }
     }
 
-    private HashMap<String, SignalModel> tokenizeConcatenatedString(String str) {
-        HashMap<String, SignalModel> signals = new HashMap<>();
-        StringTokenizer tokenizer = new StringTokenizer(str, ",");
-        while (tokenizer.hasMoreTokens()) {
-            String token = tokenizer.nextToken();
-            String[] signalTokens = token.split("\\|");
-
-            // See query, we concat signal as key|value|unit
-            String key = signalTokens[0];
-            String value = signalTokens[1];
-            String unit = signalTokens.length == 3 ? signalTokens[2] : "";
-            signals.put(key, new SignalModel(key, unit, value));
-        }
-
-        return signals;
+    private void setCursorIndex(Cursor cursor) {
+        dateIndex = cursor.getColumnIndex("date");
+        cadenceIndex = cursor.getColumnIndex("cadence");
+        positionIndex = cursor.getColumnIndex("position");
+        torqueIndex = cursor.getColumnIndex("torque");
+        powerIndex = cursor.getColumnIndex("power");
+        errorIndex = cursor.getColumnIndex("error");
+        motorErrorIndex = cursor.getColumnIndex("motor_error");
+        encoderErrorIndex = cursor.getColumnIndex("encoder_error");
+        axisStateIndex = cursor.getColumnIndex("axis_state");
+        appIsRunningIndex = cursor.getColumnIndex("app_is_running");
+        heartbeatHostIndex = cursor.getColumnIndex("heartbeat_host");
+        loopTimeIndex = cursor.getColumnIndex("loop_time");
+        vbusIndex = cursor.getColumnIndex("vbus");
+        iqSetpointIndex = cursor.getColumnIndex("iq_setpoint");
+        iqMeasuredIndex = cursor.getColumnIndex("iq_measured");
+        iqFiltIndex = cursor.getColumnIndex("iq_filt");
+        pedalTorqueIndex = cursor.getColumnIndex("pedal_torque");
+        pedalVelIndex = cursor.getColumnIndex("pedal_vel");
+        pedalPosIndex = cursor.getColumnIndex("pedal_pos");
+        pedalPowerIndex = cursor.getColumnIndex("pedal_power");
+        encoderPosIndex = cursor.getColumnIndex("encoder_pos");
+        encoderVelIndex = cursor.getColumnIndex("encoder_vel");
+        velCmdIndex = cursor.getColumnIndex("vel_cmd");
+        accCmdIndex = cursor.getColumnIndex("acc_cmd");
+        roadfeelIndex = cursor.getColumnIndex("roadfeel");
+        dampingIndex = cursor.getColumnIndex("damping");
+        inertiaIndex = cursor.getColumnIndex("inertia");
+        torqueCmdIndex = cursor.getColumnIndex("torque_cmd");
+        torqueSignalIndex = cursor.getColumnIndex("torque_signal");
+        testIndex = cursor.getColumnIndex("test");
     }
 }

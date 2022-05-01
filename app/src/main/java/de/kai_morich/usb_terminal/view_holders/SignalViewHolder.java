@@ -29,15 +29,12 @@ public class SignalViewHolder extends BaseViewHolder {
 
     @SuppressLint("SimpleDateFormat")
     public void bind(Signal signal) {
-        String date = "";
-//        if (signal.getDate() != null) {
-//            date = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(signal.getDate());
-//        }
-
+        /*
         signalType.setText(String.format("Signal Type: %s", signal.getType()));
         signalDate.setText(date);
         signalKey.setText(String.format("Signal Key: %s", signal.getKey()));
         signalValue.setText(String.format("Signal Value: %s", signal.getValue()));
         signalUnit.setText(String.format("Signal Unit: %s", signal.getUnits()));
+        */
     }
 }

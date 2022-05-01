@@ -2,12 +2,19 @@ package de.kai_morich.usb_terminal.utils;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.database.Cursor;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.Toast;
+
+import org.greenrobot.greendao.database.Database;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -43,30 +50,82 @@ public class CSVUtil {
         });
     }
 
-    @SuppressLint("SimpleDateFormat")
-    public static void exportSignalsToCSV(Context context) throws Exception {
-        File exportDir = getDownloadsDirectory();
-        String fileName = getCsvFilename();
-        File file = new File(exportDir, fileName);
-        file.createNewFile();
-        CSVWriter csvWriter = new CSVWriter(new FileWriter(file));
+    @SuppressLint({"SimpleDateFormat", "Range"})
+    public static void exportSignalsToCSV(Context context, Handler mainHandler) {
+        final ProgressDialog[] progressDialog = new ProgressDialog[1];
 
-        DaoSession daoSession = ((App) ((Activity) context).getApplication()).getDaoSession();
-        SignalDao signalDao = daoSession.getSignalDao();
-        List<Signal> signals = signalDao.loadAll();
-
-        csvWriter.writeNext(new String[]{"type", "key", "value", "unit"});
-        for (Signal signal : signals) {
-            csvWriter.writeNext(new String[]{
-                    signal.getType(),
-                    signal.getKey(),
-                    signal.getValue(),
-                    signal.getUnits()
+        try {
+            mainHandler.post(() -> {
+                progressDialog[0] = new ProgressDialog(context);
+                progressDialog[0].setTitle("Exporting as CSV");
+                progressDialog[0].setMessage("Please wait...");
+                progressDialog[0].setCancelable(false);
+                progressDialog[0].setCanceledOnTouchOutside(false);
+                progressDialog[0].setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             });
-        }
 
-        csvWriter.close();
-        showSavedLocation(context, file);
+            File exportDir = getDownloadsDirectory();
+            String fileName = getCsvFilename();
+            File file = new File(exportDir, fileName);
+            file.createNewFile();
+            CSVWriter csvWriter = new CSVWriter(new FileWriter(file));
+
+            DaoSession daoSession = ((App) ((Activity) context).getApplication()).getDaoSession();
+            Database database = daoSession.getDatabase();
+            Cursor cursor = database.rawQuery("SELECT * FROM signals INNER JOIN trial_data ON trial_data.id = signals.trial_data_id", null);
+
+            mainHandler.post(() -> {
+                progressDialog[0].setMax(cursor.getCount());
+                progressDialog[0].show();
+            });
+
+            csvWriter.writeNext(new String[]{"date", "cadence", "position", "torque", "power", "error", "motor_error", "encoder_error", "axis_state", "app_is_running", "heartbeat_host", "loop_time (us)", "vbus", "iq_setpoint", "iq_measured", "iq_filt", "pedal_torque", "pedal_vel", "pedal_pos", "pedal_power", "encoder_pos", "encoder_vel", "vel_cmd", "acc_cmd", "roadfeel", "damping", "inertia", "torque_cmd", "torque_signal", "test"});
+            while (cursor.moveToNext()) {
+                csvWriter.writeNext(new String[]{
+                        cursor.getString(cursor.getColumnIndex("date")),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("cadence"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("position"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("torque"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("power"))),
+                        String.valueOf(cursor.getInt(cursor.getColumnIndex("error"))),
+                        String.valueOf(cursor.getInt(cursor.getColumnIndex("motor_error"))),
+                        String.valueOf(cursor.getInt(cursor.getColumnIndex("encoder_error"))),
+                        String.valueOf(cursor.getInt(cursor.getColumnIndex("axis_state"))),
+                        String.valueOf(cursor.getInt(cursor.getColumnIndex("app_is_running"))),
+                        String.valueOf(cursor.getInt(cursor.getColumnIndex("heartbeat_host"))),
+                        String.valueOf(cursor.getInt(cursor.getColumnIndex("loop_time"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("vbus"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("iq_setpoint"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("iq_measured"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("iq_filt"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("pedal_torque"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("pedal_vel"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("pedal_pos"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("pedal_power"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("encoder_pos"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("encoder_vel"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("vel_cmd"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("acc_cmd"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("roadfeel"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("damping"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("inertia"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("torque_cmd"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("torque_signal"))),
+                        String.valueOf(cursor.getDouble(cursor.getColumnIndex("test"))),
+                });
+
+                mainHandler.post(() -> {
+                    progressDialog[0].incrementProgressBy(1);
+                    progressDialog[0].incrementSecondaryProgressBy(1);
+                });
+            }
+
+            csvWriter.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            progressDialog[0].dismiss();
+        }
     }
 
     @SuppressLint("SimpleDateFormat")

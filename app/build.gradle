@@ -9,7 +9,7 @@ android {
     compileSdkVersion 32
     defaultConfig {
         targetSdkVersion 32
-        minSdkVersion 19
+        minSdkVersion 26
         vectorDrawables.useSupportLibrary true
         applicationId "de.kai_morich.usb_terminal"
         versionCode 1
@@ -22,7 +22,8 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            shrinkResources true
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -50,8 +51,5 @@ dependencies {
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.google.firebase:firebase-analytics'
 
-    implementation group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
-    implementation group: 'org.apache.xmlbeans', name: 'xmlbeans', version: '3.1.0'
-    implementation 'javax.xml.stream:stax-api:1.0'
-    implementation 'com.fasterxml:aalto-xml:1.2.2'
+    implementation files('src/main/java/de/kai_morich/usb_terminal/libs/poishadow-all.jar')
 }

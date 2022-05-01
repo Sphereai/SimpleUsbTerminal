@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.work.Constraints;
 import androidx.work.Data;
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
@@ -63,6 +64,7 @@ import de.kai_morich.usb_terminal.libs.excel.RowData;
 import de.kai_morich.usb_terminal.libs.excel.SQLiteToExcel;
 import de.kai_morich.usb_terminal.utils.CSVUtil;
 import de.kai_morich.usb_terminal.utils.DatabaseManager;
+import de.kai_morich.usb_terminal.utils.ExcelUtil;
 import de.kai_morich.usb_terminal.utils.PermissionManager;
 import de.kai_morich.usb_terminal.workers.ExportSignalWorker;
 
@@ -345,15 +347,18 @@ public class TrialDataFragment extends Fragment {
         if (distinctTrialIds.isEmpty()) {
             Toast.makeText(getActivity(), "Signal records not found.", Toast.LENGTH_SHORT).show();
         } else {
-            Data.Builder builder = new Data.Builder();
+            MainActivity activity = (MainActivity)getActivity();
+            ExcelUtil.exportAllSignals(activity, trialId, trialNumber);
+            /*Data.Builder builder = new Data.Builder();
             builder.putLong(Constants.AppKeys.KEY_TRIAL_ID, trialId);
             builder.putInt(Constants.AppKeys.KEY_TRIAL_NUMBER, trialNumber);
             Data inputData = builder.build();
 
-            WorkRequest exportSignalWorkRequest = new OneTimeWorkRequest.Builder(ExportSignalWorker.class).setInputData(inputData).build();
+            OneTimeWorkRequest exportSignalWorkRequest = new OneTimeWorkRequest.Builder(ExportSignalWorker.class).setInputData(inputData).build();
+            WorkManager.getInstance(getActivity()).enqueueUniqueWork("EXPORT_SIGNAL_WORKER", ExistingWorkPolicy.KEEP, exportSignalWorkRequest);
             WorkManager.getInstance(getActivity()).enqueue(exportSignalWorkRequest);
 
-            Toast.makeText(getActivity(), "Task is scheduled to export all signals. We'll notify you when task completed.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "Task is scheduled to export all signals. We'll notify you when task completed.", Toast.LENGTH_SHORT).show();*/
         }
     }
 

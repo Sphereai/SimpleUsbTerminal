@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.method.ScrollingMovementMethod;
@@ -417,13 +418,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             @Override
             public void run() {
                 try {
-                    CSVUtil.exportSignalsToCSV(getActivity());
+                    CSVUtil.exportSignalsToCSV(getActivity(), new Handler(Looper.getMainLooper()));
                 } catch (Exception e) {
                     statusOnUiThread(e.getMessage());
                 } finally {
-                    getActivity().runOnUiThread(() -> {
-                        progressDialog.dismiss();
-                    });
+                    requireActivity().runOnUiThread(progressDialog::dismiss);
                 }
             }
         };
@@ -592,13 +591,14 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
             case "road":
                 if (tokens.length == 2) {
-                    double Value = Double.parseDouble(tokens[1];
-                    double RoadValue = (Value<5) ? Value : 0;
-                command = TrivelProtocol.Command.newBuilder()
-                        .setAction(TrivelProtocol.Command.Action.SetRoadfeel)
-                        .setRoadfeelSettings(
-                                TrivelProtocol.RoadfeelSettings.newBuilder().setGain(RoadValue))
-                        .build();
+                    double Value = Double.parseDouble(tokens[1]);
+                    double RoadValue = (Value < 5) ? Value : 0;
+                    command = TrivelProtocol.Command.newBuilder()
+                            .setAction(TrivelProtocol.Command.Action.SetRoadfeel)
+                            .setRoadfeelSettings(
+                                    TrivelProtocol.RoadfeelSettings.newBuilder().setGain(RoadValue))
+                            .build();
+                }
                 break;
 
             // "cycling [torque] [gain] [phase]"
@@ -634,7 +634,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 TrivelProtocol.Command.Builder builder = TrivelProtocol.Command.newBuilder()
                         .setAction(TrivelProtocol.Command.Action.SetAssistedMode)
                         .setAssistanceSettings(
-                                TrivelProtocol.AssistanceSettings.newBuilder().setCadence(0).setTimeSettingsEnable(false))
+                                TrivelProtocol.AssistanceSettings.newBuilder().setCadence(0).setTimeSettingsEnable(false));
         //                .setTimeOscillatorSettings(
                 //                       TrivelProtocol.OscillatorSettings.newBuilder().setGain(1).setPeriod(1))
                                        ;
@@ -757,39 +757,16 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     TrivelProtocol.UnsignedIntSignal signal = reply.getUnsignedIntSignals(index);
                     statusOnUiThread(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
 
-                    Signal uIntSignal = new Signal();
-                    uIntSignal.setTrialDataId(lastInsertedTrialDataId);
-                    uIntSignal.setType(Constants.SignalType.UINT);
-                    uIntSignal.setKey(signal.getKey());
-                    uIntSignal.setValue(String.valueOf(signal.getValue()));
-                    uIntSignal.setUnits(signal.getUnits());
-                    signals.add(uIntSignal);
                 }
 
                 for (int index = 0; index < reply.getIntSignalsCount(); index++) {
                     TrivelProtocol.IntSignal signal = reply.getIntSignals(index);
                     statusOnUiThread(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
-
-                    Signal intSignal = new Signal();
-                    intSignal.setTrialDataId(lastInsertedTrialDataId);
-                    intSignal.setType(Constants.SignalType.INT);
-                    intSignal.setKey(signal.getKey());
-                    intSignal.setValue(String.valueOf(signal.getValue()));
-                    intSignal.setUnits(signal.getUnits());
-                    signals.add(intSignal);
                 }
 
                 for (int index = 0; index < reply.getDoubleSignalsCount(); index++) {
                     TrivelProtocol.DoubleSignal signal = reply.getDoubleSignals(index);
                     statusOnUiThread(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
-
-                    Signal doubleSignal = new Signal();
-                    doubleSignal.setType(Constants.SignalType.DOUBLE);
-                    doubleSignal.setTrialDataId(lastInsertedTrialDataId);
-                    doubleSignal.setKey(signal.getKey());
-                    doubleSignal.setValue(String.valueOf(signal.getValue()));
-                    doubleSignal.setUnits(signal.getUnits());
-                    signals.add(doubleSignal);
                 }
 
                 signalDao.insertInTx(signals);

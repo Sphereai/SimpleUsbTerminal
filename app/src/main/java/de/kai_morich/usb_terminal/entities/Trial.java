@@ -18,6 +18,7 @@ public class Trial {
     @Property(nameInDb = "id")
     private Long id;
 
+    @Property(nameInDb = "user_id")
     private long userId;
 
     @ToOne(joinProperty = "userId")

@@ -16,11 +16,13 @@ public class SequenceRecord {
     @Property(nameInDb = "id")
     private Long id;
 
+    @Property(nameInDb = "custom_sequence_id")
     private long customSequenceId;
 
     @ToOne(joinProperty = "customSequenceId")
     private CustomSequence customSequence;
 
+    @Property(nameInDb = "global_sequence_id")
     private long globalSequenceId;
 
     @ToOne(joinProperty = "globalSequenceId")

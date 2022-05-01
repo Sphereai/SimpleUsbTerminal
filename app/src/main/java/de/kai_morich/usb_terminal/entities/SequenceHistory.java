@@ -16,6 +16,7 @@ public class SequenceHistory {
     @Property(nameInDb = "id")
     private Long id;
 
+    @Property(nameInDb = "trial_data_id")
     private long trialDataId;
 
     @ToOne(joinProperty = "trialDataId")

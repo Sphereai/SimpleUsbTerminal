@@ -7,6 +7,8 @@ import android.os.Build;
 
 import androidx.core.app.NotificationCompat;
 
+import java.util.Locale;
+
 import de.kai_morich.usb_terminal.Constants;
 import de.kai_morich.usb_terminal.R;
 
@@ -35,10 +37,8 @@ public class NotificationUtil {
         builder.setContentTitle(title).setContentText(content);
     }
 
-    public void updateProgress(int percent) {
-        builder.setOngoing(true)
-                .setContentInfo(percent + "%")
-                .setProgress(100, percent, false);
+    public void updateProgress(int max, int progress) {
+        builder.setOngoing(true).setContentText(String.format(Locale.getDefault(),"%d/%d", progress, max)).setProgress(max, progress, false);
 
         notificationManager.notify(Constants.Notification.NOTIFICATION_ID, builder.build());
     }

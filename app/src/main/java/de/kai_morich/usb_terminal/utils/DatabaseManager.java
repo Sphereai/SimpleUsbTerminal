@@ -21,4 +21,9 @@ public class DatabaseManager {
         cursor.close();
         return trialDataIds;
     }
+
+    public static Cursor getSignalsQuery(App app, long trialId) {
+        Database database = app.getDaoSession().getDatabase();
+        return database.rawQuery("SELECT * FROM signals INNER JOIN trial_data ON trial_data.id = signals.trial_data_id where trial_data.trial_id = ?", new String[] {String.valueOf(trialId)});
+    }
 }
