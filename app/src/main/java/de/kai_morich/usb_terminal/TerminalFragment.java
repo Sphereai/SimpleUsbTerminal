@@ -53,10 +53,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -95,7 +93,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private Connected connected = Connected.False;
     private boolean startSendingGetSignals = false;
     private boolean initialStart = true;
-    private boolean pendingNewline = false;
     private String newline = TextUtil.newline_crlf;
 
     private static final String RECEIVE_SIGNAL_HANDLER_THREAD_NAME = "RECEIVE_SIGNAL_THREAD";
@@ -106,9 +103,14 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private static final String LAST_ACTION_DATE_TAG = "last_action_date";
 
     private String strTrialNumber, strStartDate, strLastActionDate;
-    private long lastTrialInsertedId = -1;
+    private long lastInsertedTrialId = -1;
     private int counter = 1;
     private boolean isExceptionOccured = false;
+
+    private TrialDataDao trialDataDao;
+    private SignalDao signalDao;
+    private TrialData trialData;
+    private Signal signal;
 
     public TerminalFragment() {
         broadcastReceiver = new BroadcastReceiver() {
@@ -133,6 +135,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         deviceId = getArguments().getInt("device");
         portNum = getArguments().getInt("port");
         baudRate = getArguments().getInt("baud");
+
+        DaoSession daoSession = ((App) getActivity().getApplication()).getDaoSession();
+        trialDataDao = daoSession.getTrialDataDao();
+        signalDao = daoSession.getSignalDao();
     }
 
     @Override
@@ -386,7 +392,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
         DaoSession daoSession = ((App) getActivity().getApplication()).getDaoSession();
         TrialDao trialDao = daoSession.getTrialDao();
-        lastTrialInsertedId = trialDao.insert(trial);
+        lastInsertedTrialId = trialDao.insert(trial);
     }
 
     private boolean checkPermissionForWriteExternalStorage() {
@@ -728,48 +734,45 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         receiveText.append(spn);
     }
 
-    private void receive(byte[] data) {
+    private synchronized void receive(byte[] data) {
 
         mReceiveSignalHandler.post(() -> {
             try {
-                List<Signal> signals = new ArrayList<>();
-
-                InputStream inputStream = new ByteArrayInputStream(data);  // or offset and lenght
+                InputStream inputStream = new ByteArrayInputStream(data);  // or offset and length
                 TrivelProtocol.Reply reply = TrivelProtocol.Reply.parseDelimitedFrom(inputStream);
 
-                DaoSession daoSession = ((App) getActivity().getApplication()).getDaoSession();
-                TrialDataDao trialDataDao = daoSession.getTrialDataDao();
-                SignalDao signalDao = daoSession.getSignalDao();
-
-                String date = DateTimeUtil.toLocalDateTime(new Date());
-
-                TrialData trialData = new TrialData();
-                trialData.setTrialId(lastTrialInsertedId);
+                trialData = new TrialData();
+                trialData.setTrialId(lastInsertedTrialId);
                 trialData.setDeviceId(deviceId);
                 trialData.setCadence(reply.getCadence());
                 trialData.setPosition(reply.getPosition());
                 trialData.setTorque(reply.getTorque());
                 trialData.setPower(reply.getPower());
-                trialData.setDate(date);
+                trialData.setDate(DateTimeUtil.toLocalDateTime(new Date()));
                 long lastInsertedTrialDataId = trialDataDao.insert(trialData);
 
-                for (int index = 0; index < reply.getUnsignedIntSignalsCount(); index++) {
-                    TrivelProtocol.UnsignedIntSignal signal = reply.getUnsignedIntSignals(index);
-                    statusOnUiThread(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
+                signal = new Signal();
+                signal.setTrialDataId(lastInsertedTrialDataId);
 
+                for (int index = 0; index < reply.getUnsignedIntSignalsCount(); index++) {
+                    setUnsignedIntSignals(reply.getUnsignedIntSignals(index));
                 }
 
                 for (int index = 0; index < reply.getIntSignalsCount(); index++) {
-                    TrivelProtocol.IntSignal signal = reply.getIntSignals(index);
-                    statusOnUiThread(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
+                    TrivelProtocol.IntSignal intSignal = reply.getIntSignals(index);
+                    statusOnUiThread(intSignal.getKey() + " = " + intSignal.getValue() + " " + intSignal.getUnits());
+
+                    if (intSignal.getKey().equalsIgnoreCase("loop_time")) {
+                        signal.setLoopTime(intSignal.getValue());
+                    }
                 }
 
                 for (int index = 0; index < reply.getDoubleSignalsCount(); index++) {
-                    TrivelProtocol.DoubleSignal signal = reply.getDoubleSignals(index);
-                    statusOnUiThread(signal.getKey() + " = " + signal.getValue() + " " + signal.getUnits());
+                    TrivelProtocol.DoubleSignal doubleSignal = reply.getDoubleSignals(index);
+                    setDoubleSignals(doubleSignal);
                 }
 
-                signalDao.insertInTx(signals);
+                signalDao.insertInTx(signal);
 
                 if (counter >= 100) {
                     counter = 1;
@@ -785,6 +788,114 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 FirebaseCrashlytics.getInstance().recordException(e);
             }
         });
+    }
+
+    private void setUnsignedIntSignals(TrivelProtocol.UnsignedIntSignal unsignedIntSignal) {
+        statusOnUiThread(unsignedIntSignal.getKey() + " = " + unsignedIntSignal.getValue() + " " + unsignedIntSignal.getUnits());
+
+        switch (unsignedIntSignal.getKey()) {
+            case "error":
+                signal.setError(unsignedIntSignal.getValue());
+                break;
+
+            case "motor_error":
+                signal.setMotorError(unsignedIntSignal.getValue());
+                break;
+
+            case "encoder_error":
+                signal.setEncoderError(unsignedIntSignal.getValue());
+                break;
+
+            case "axis_state":
+                signal.setAxisState(unsignedIntSignal.getValue());
+                break;
+
+            case "app_is_running":
+                signal.setAppIsRunning(unsignedIntSignal.getValue());
+                break;
+
+            case "heartbeat_host":
+                signal.setHeartBeatHost(unsignedIntSignal.getValue());
+                break;
+        }
+    }
+
+    private void setDoubleSignals(TrivelProtocol.DoubleSignal doubleSignal) {
+        statusOnUiThread(doubleSignal.getKey() + " = " + doubleSignal.getValue() + " " + doubleSignal.getUnits());
+
+        switch (doubleSignal.getKey()) {
+            case "vbus":
+                signal.setVbus(doubleSignal.getValue());
+                break;
+
+            case "iq_setpoint":
+                signal.setIqSetpoint(doubleSignal.getValue());
+                break;
+
+            case "iq_measured":
+                signal.setIqMeasured(doubleSignal.getValue());
+                break;
+
+            case "iq_filt":
+                signal.setIqFilt(doubleSignal.getValue());
+                break;
+
+            case "pedal_torque":
+                signal.setPedalTorque(doubleSignal.getValue());
+                break;
+
+            case "pedal_vel":
+                signal.setPedalVel(doubleSignal.getValue());
+                break;
+
+            case "pedal_pos":
+                signal.setPedalPos(doubleSignal.getValue());
+                break;
+
+            case "pedal_power":
+                signal.setPedalPower(doubleSignal.getValue());
+                break;
+
+            case "encoder_pos":
+                signal.setEncoderPos(doubleSignal.getValue());
+                break;
+
+            case "encoder_vel":
+                signal.setEncoderVel(doubleSignal.getValue());
+                break;
+
+            case "vel_cmd":
+                signal.setVelCmd(doubleSignal.getValue());
+                break;
+
+            case "acc_cmd":
+                signal.setAccCmd(doubleSignal.getValue());
+                break;
+
+            case "torque_cmd":
+                signal.setTorqueCmd(doubleSignal.getValue());
+                break;
+
+            case "roadfeel":
+                signal.setRoadFeel(doubleSignal.getValue());
+                break;
+
+            case "damping":
+                signal.setDamping(doubleSignal.getValue());
+                break;
+
+            case "inertia":
+                signal.setInertia(doubleSignal.getValue());
+                break;
+
+            case "torque_signal":
+                signal.setTorqueSignal(doubleSignal.getValue());
+                break;
+
+            case "test":
+                signal.setTest(doubleSignal.getValue());
+                break;
+        }
     }
 
     void onExceptionOccurred(String msg) {

@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
         setSupportActionBar(toolbar);
         getSupportFragmentManager().addOnBackStackChangedListener(this);
         if (savedInstanceState == null) {
-//            getSupportFragmentManager().beginTransaction().add(R.id.fragment, new DevicesFragment(), "devices").commit();
+            getSupportFragmentManager().beginTransaction().add(R.id.fragment, new DevicesFragment(), "devices").commit();
 
             /*
             Bundle args = new Bundle();
@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
             terminalFragment.setArguments(args);
             getSupportFragmentManager().beginTransaction().add(R.id.fragment, terminalFragment, "terminal").commit();
             */
-            getSupportFragmentManager().beginTransaction().add(R.id.fragment, new CounterFragment(), "counter").commit();
+//            getSupportFragmentManager().beginTransaction().add(R.id.fragment, new CounterFragment(), "counter").commit();
         } else {
             onBackStackChanged();
         }
