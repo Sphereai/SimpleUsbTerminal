@@ -14,7 +14,7 @@ public class DatabaseManager {
     public static List<Integer> getDistinctTrialDataIdFromSignals(App app, long trialId) {
         List<Integer> trialDataIds = new ArrayList<>();
         Database database = app.getDaoSession().getDatabase();
-        Cursor cursor = database.rawQuery("SELECT DISTINCT TRIAL_DATA_ID FROM signals WHERE EXISTS (SELECT * FROM trial_data WHERE trial_data.id = signals.TRIAL_DATA_ID AND trial_data.TRIAL_ID = ?)", new String[] {String.valueOf(trialId)});
+        Cursor cursor = database.rawQuery("SELECT DISTINCT trial_data_id FROM signals WHERE EXISTS (SELECT * FROM trial_data WHERE trial_data.id = signals.trial_data_id AND trial_data.trial_id = ?)", new String[] {String.valueOf(trialId)});
         while (cursor.moveToNext()) {
             trialDataIds.add(cursor.getInt(0));
         }
