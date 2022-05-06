@@ -131,19 +131,19 @@ public class ExcelUtil {
                         row.createCell(6).setCellValue((double) cursor.getLong(motorErrorIndex));
 
                     if (cursor.isNull(axisStateIndex))
-                        row.createCell(8);
+                        row.createCell(7);
                     else
-                        row.createCell(8).setCellValue((double) cursor.getLong(axisStateIndex));
+                        row.createCell(7).setCellValue((double) cursor.getLong(axisStateIndex));
 
                     if (cursor.isNull(appIsRunningIndex))
-                        row.createCell(9);
+                        row.createCell(8);
                     else
-                        row.createCell(9).setCellValue((double) cursor.getLong(appIsRunningIndex));
+                        row.createCell(8).setCellValue((double) cursor.getLong(appIsRunningIndex));
 
                     if (cursor.isNull(roadfeelIndex))
-                        row.createCell(24);
+                        row.createCell(9);
                     else
-                        row.createCell(24).setCellValue(cursor.getLong(roadfeelIndex));
+                        row.createCell(9).setCellValue(cursor.getLong(roadfeelIndex));
 
                     if (cursor.isNull(heartbeatHostIndex))
                         row.createCell(10);
@@ -156,24 +156,24 @@ public class ExcelUtil {
                         row.createCell(11).setCellValue(cursor.getInt(loopTimeIndex));
 
                     if (cursor.isNull(magnetoXIndex))
-                        row.createCell(11);
+                        row.createCell(12);
                     else
-                        row.createCell(11).setCellValue(cursor.getInt(magnetoXIndex));
+                        row.createCell(12).setCellValue(cursor.getInt(magnetoXIndex));
 
                     if (cursor.isNull(accelZIndex))
-                        row.createCell(12);
+                        row.createCell(13);
                     else
-                        row.createCell(12).setCellValue(cursor.getInt(accelZIndex));
+                        row.createCell(13).setCellValue(cursor.getInt(accelZIndex));
 
                     if (cursor.isNull(vbusIndex))
-                        row.createCell(12);
-                    else
-                        row.createCell(12).setCellValue(cursor.getDouble(vbusIndex));
-
-                    if (cursor.isNull(iqMeasuredIndex))
                         row.createCell(14);
                     else
-                        row.createCell(14).setCellValue(cursor.getDouble(iqMeasuredIndex));
+                        row.createCell(14).setCellValue(cursor.getDouble(vbusIndex));
+
+                    if (cursor.isNull(iqMeasuredIndex))
+                        row.createCell(15);
+                    else
+                        row.createCell(15).setCellValue(cursor.getDouble(iqMeasuredIndex));
 
                     if (cursor.isNull(pedalTorqueIndex))
                         row.createCell(16);
@@ -216,26 +216,27 @@ public class ExcelUtil {
                         row.createCell(23).setCellValue(cursor.getDouble(accCmdIndex));
 
                     if (cursor.isNull(torqueCmdIndex))
-                        row.createCell(27);
+                        row.createCell(24);
                     else
-                        row.createCell(27).setCellValue(cursor.getDouble(torqueCmdIndex));
+                        row.createCell(24).setCellValue(cursor.getDouble(torqueCmdIndex));
 
                     if (cursor.isNull(inertiaIndex))
-                        row.createCell(26);
+                        row.createCell(25);
                     else
-                        row.createCell(26).setCellValue(cursor.getDouble(inertiaIndex));
+                        row.createCell(25).setCellValue(cursor.getDouble(inertiaIndex));
 
                     if (cursor.isNull(accelIndex))
-                        row.createCell(28);
+                        row.createCell(26);
                     else
-                        row.createCell(28).setCellValue(cursor.getDouble(accelIndex));
+                        row.createCell(26).setCellValue(cursor.getDouble(accelIndex));
 
                     if (cursor.isNull(magnetoIndex))
-                        row.createCell(29);
+                        row.createCell(27);
                     else
-                        row.createCell(29).setCellValue(cursor.getDouble(magnetoIndex));
+                        row.createCell(27).setCellValue(cursor.getDouble(magnetoIndex));
 
-                    handler.post(() -> activity.setProgressValue(rowNumber));
+
+                    handler.post(() -> activity.setProgressValue(rowNumber - 1));
                     rowNumber++;
                 }
 
