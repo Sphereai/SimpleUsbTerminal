@@ -395,47 +395,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         lastInsertedTrialId = trialDao.insert(trial);
     }
 
-    private boolean checkPermissionForWriteExternalStorage() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            int result = getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-            return result == PackageManager.PERMISSION_GRANTED;
-        }
-        return false;
-    }
-
-    private void exportSignalsToCSV() {
-
-        if (!checkPermissionForWriteExternalStorage()) {
-            ActivityCompat.requestPermissions(
-                    getActivity(),
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    EXTERNAL_STORAGE_PERMISSION_CODE
-            );
-        }
-
-        ProgressDialog progressDialog = new ProgressDialog(getActivity());
-        progressDialog.setTitle("Exporting to CSV");
-        progressDialog.setMessage("Please wait...");
-        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        progressDialog.show();
-        progressDialog.setCancelable(false);
-
-        Thread thread = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    CSVUtil.exportSignalsToCSV(getActivity(), new Handler(Looper.getMainLooper()));
-                } catch (Exception e) {
-                    statusOnUiThread(e.getMessage());
-                } finally {
-                    requireActivity().runOnUiThread(progressDialog::dismiss);
-                }
-            }
-        };
-
-        thread.start();
-    }
-
     /*
      * Handler to send command after x milliseconds
      */
@@ -759,12 +718,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 }
 
                 for (int index = 0; index < reply.getIntSignalsCount(); index++) {
-                    TrivelProtocol.IntSignal intSignal = reply.getIntSignals(index);
-                    statusOnUiThread(intSignal.getKey() + " = " + intSignal.getValue() + " " + intSignal.getUnits());
-
-                    if (intSignal.getKey().equalsIgnoreCase("loop_time")) {
-                        signal.setLoopTime(intSignal.getValue());
-                    }
+                    setIntSignals(reply.getIntSignals(index));
                 }
 
                 for (int index = 0; index < reply.getDoubleSignalsCount(); index++) {
@@ -795,27 +749,43 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
         switch (unsignedIntSignal.getKey()) {
             case "error":
-                signal.setError(unsignedIntSignal.getValue());
+                signal.setError(Integer.toUnsignedLong(unsignedIntSignal.getValue()));
                 break;
 
             case "motor_error":
-                signal.setMotorError(unsignedIntSignal.getValue());
-                break;
-
-            case "encoder_error":
-                signal.setEncoderError(unsignedIntSignal.getValue());
+                signal.setMotorError(Integer.toUnsignedLong(unsignedIntSignal.getValue()));
                 break;
 
             case "axis_state":
-                signal.setAxisState(unsignedIntSignal.getValue());
+                signal.setAxisState(Integer.toUnsignedLong(unsignedIntSignal.getValue()));
                 break;
 
             case "app_is_running":
-                signal.setAppIsRunning(unsignedIntSignal.getValue());
+                signal.setAppIsRunning(Integer.toUnsignedLong(unsignedIntSignal.getValue()));
+                break;
+
+            case "roadfeel":
+                signal.setRoadFeel(Integer.toUnsignedLong(unsignedIntSignal.getValue()));
                 break;
 
             case "heartbeat_host":
-                signal.setHeartBeatHost(unsignedIntSignal.getValue());
+                signal.setHeartBeatHost(Integer.toUnsignedLong(unsignedIntSignal.getValue()));
+                break;
+        }
+    }
+
+    private void setIntSignals(TrivelProtocol.IntSignal intSignal) {
+        statusOnUiThread(intSignal.getKey() + " = " + intSignal.getValue() + " " + intSignal.getUnits());
+
+        switch (intSignal.getKey()) {
+            case "loop_time":
+                signal.setLoopTime(intSignal.getValue());
+                break;
+            case "Magneto_x":
+                signal.setMagnetoX(intSignal.getValue());
+                break;
+            case "Accel_z":
+                signal.setAccelZ(intSignal.getValue());
                 break;
         }
     }
@@ -828,16 +798,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 signal.setVbus(doubleSignal.getValue());
                 break;
 
-            case "iq_setpoint":
-                signal.setIqSetpoint(doubleSignal.getValue());
-                break;
-
             case "iq_measured":
                 signal.setIqMeasured(doubleSignal.getValue());
-                break;
-
-            case "iq_filt":
-                signal.setIqFilt(doubleSignal.getValue());
                 break;
 
             case "pedal_torque":
@@ -876,24 +838,16 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 signal.setTorqueCmd(doubleSignal.getValue());
                 break;
 
-            case "roadfeel":
-                signal.setRoadFeel(doubleSignal.getValue());
-                break;
-
-            case "damping":
-                signal.setDamping(doubleSignal.getValue());
-                break;
-
             case "inertia":
                 signal.setInertia(doubleSignal.getValue());
                 break;
 
-            case "torque_signal":
-                signal.setTorqueSignal(doubleSignal.getValue());
+            case "Accel":
+                signal.setAccel(doubleSignal.getValue());
                 break;
 
-            case "test":
-                signal.setTest(doubleSignal.getValue());
+            case "Magneto":
+                signal.setMagneto(doubleSignal.getValue());
                 break;
         }
     }

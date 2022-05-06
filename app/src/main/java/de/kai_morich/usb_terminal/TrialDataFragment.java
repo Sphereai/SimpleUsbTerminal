@@ -349,16 +349,6 @@ public class TrialDataFragment extends Fragment {
         } else {
             MainActivity activity = (MainActivity)getActivity();
             ExcelUtil.exportAllSignals(activity, trialId, trialNumber);
-            /*Data.Builder builder = new Data.Builder();
-            builder.putLong(Constants.AppKeys.KEY_TRIAL_ID, trialId);
-            builder.putInt(Constants.AppKeys.KEY_TRIAL_NUMBER, trialNumber);
-            Data inputData = builder.build();
-
-            OneTimeWorkRequest exportSignalWorkRequest = new OneTimeWorkRequest.Builder(ExportSignalWorker.class).setInputData(inputData).build();
-            WorkManager.getInstance(getActivity()).enqueueUniqueWork("EXPORT_SIGNAL_WORKER", ExistingWorkPolicy.KEEP, exportSignalWorkRequest);
-            WorkManager.getInstance(getActivity()).enqueue(exportSignalWorkRequest);
-
-            Toast.makeText(getActivity(), "Task is scheduled to export all signals. We'll notify you when task completed.", Toast.LENGTH_SHORT).show();*/
         }
     }
 

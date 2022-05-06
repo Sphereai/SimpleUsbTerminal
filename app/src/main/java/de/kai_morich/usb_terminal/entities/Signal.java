@@ -23,35 +23,35 @@ public class Signal {
     @Property(nameInDb = "loop_time")
     private Integer loopTime;
 
+    @Property(nameInDb = "magneto_x")
+    private Integer magnetoX;
+
+    @Property(nameInDb = "accel_z")
+    private Integer accelZ;
+
     @Property(nameInDb = "error")
-    private Integer error;
+    private Long error;
 
     @Property(nameInDb = "motor_error")
-    private Integer motorError;
-
-    @Property(nameInDb = "encoder_error")
-    private Integer encoderError;
+    private Long motorError;
 
     @Property(nameInDb = "axis_state")
-    private Integer axisState;
+    private Long axisState;
 
     @Property(nameInDb = "app_is_running")
-    private Integer appIsRunning;
+    private Long appIsRunning;
+
+    @Property(nameInDb = "roadfeel")
+    private Long roadFeel;
 
     @Property(nameInDb = "heartbeat_host")
-    private Integer heartBeatHost;
+    private Long heartBeatHost;
 
     @Property(nameInDb = "vbus")
     private Double vbus;
 
-    @Property(nameInDb = "iq_setpoint")
-    private Double iqSetpoint;
-
     @Property(nameInDb = "iq_measured")
     private Double iqMeasured;
-
-    @Property(nameInDb = "iq_filt")
-    private Double iqFilt;
 
     @Property(nameInDb = "pedal_torque")
     private Double pedalTorque;
@@ -80,20 +80,14 @@ public class Signal {
     @Property(nameInDb = "torque_cmd")
     private Double torqueCmd;
 
-    @Property(nameInDb = "roadfeel")
-    private Double roadFeel;
-
-    @Property(nameInDb = "damping")
-    private Double damping;
-
     @Property(nameInDb = "inertia")
     private Double inertia;
 
-    @Property(nameInDb = "torque_signal")
-    private Double torqueSignal;
+    @Property(nameInDb = "accel")
+    private Double accel;
 
-    @Property(nameInDb = "test")
-    private Double test;
+    @Property(nameInDb = "magneto")
+    private Double magneto;
 
     /** Used to resolve relations */
     @Generated(hash = 2040040024)
@@ -103,28 +97,27 @@ public class Signal {
     @Generated(hash = 51506229)
     private transient SignalDao myDao;
 
-    @Generated(hash = 1958328048)
-    public Signal(Long id, long trialDataId, Integer loopTime, Integer error,
-            Integer motorError, Integer encoderError, Integer axisState,
-            Integer appIsRunning, Integer heartBeatHost, Double vbus,
-            Double iqSetpoint, Double iqMeasured, Double iqFilt, Double pedalTorque,
-            Double pedalVel, Double pedalPos, Double pedalPower, Double encoderPos,
-            Double encoderVel, Double velCmd, Double accCmd, Double torqueCmd,
-            Double roadFeel, Double damping, Double inertia, Double torqueSignal,
-            Double test) {
+    @Generated(hash = 867877679)
+    public Signal(Long id, long trialDataId, Integer loopTime, Integer magnetoX,
+            Integer accelZ, Long error, Long motorError, Long axisState,
+            Long appIsRunning, Long roadFeel, Long heartBeatHost, Double vbus,
+            Double iqMeasured, Double pedalTorque, Double pedalVel, Double pedalPos,
+            Double pedalPower, Double encoderPos, Double encoderVel, Double velCmd,
+            Double accCmd, Double torqueCmd, Double inertia, Double accel,
+            Double magneto) {
         this.id = id;
         this.trialDataId = trialDataId;
         this.loopTime = loopTime;
+        this.magnetoX = magnetoX;
+        this.accelZ = accelZ;
         this.error = error;
         this.motorError = motorError;
-        this.encoderError = encoderError;
         this.axisState = axisState;
         this.appIsRunning = appIsRunning;
+        this.roadFeel = roadFeel;
         this.heartBeatHost = heartBeatHost;
         this.vbus = vbus;
-        this.iqSetpoint = iqSetpoint;
         this.iqMeasured = iqMeasured;
-        this.iqFilt = iqFilt;
         this.pedalTorque = pedalTorque;
         this.pedalVel = pedalVel;
         this.pedalPos = pedalPos;
@@ -134,11 +127,9 @@ public class Signal {
         this.velCmd = velCmd;
         this.accCmd = accCmd;
         this.torqueCmd = torqueCmd;
-        this.roadFeel = roadFeel;
-        this.damping = damping;
         this.inertia = inertia;
-        this.torqueSignal = torqueSignal;
-        this.test = test;
+        this.accel = accel;
+        this.magneto = magneto;
     }
 
     @Generated(hash = 783005292)
@@ -169,51 +160,67 @@ public class Signal {
         this.loopTime = loopTime;
     }
 
-    public Integer getError() {
+    public Integer getMagnetoX() {
+        return this.magnetoX;
+    }
+
+    public void setMagnetoX(Integer magnetoX) {
+        this.magnetoX = magnetoX;
+    }
+
+    public Integer getAccelZ() {
+        return this.accelZ;
+    }
+
+    public void setAccelZ(Integer accelZ) {
+        this.accelZ = accelZ;
+    }
+
+    public Long getError() {
         return this.error;
     }
 
-    public void setError(Integer error) {
+    public void setError(Long error) {
         this.error = error;
     }
 
-    public Integer getMotorError() {
+    public Long getMotorError() {
         return this.motorError;
     }
 
-    public void setMotorError(Integer motorError) {
+    public void setMotorError(Long motorError) {
         this.motorError = motorError;
     }
 
-    public Integer getEncoderError() {
-        return this.encoderError;
-    }
-
-    public void setEncoderError(Integer encoderError) {
-        this.encoderError = encoderError;
-    }
-
-    public Integer getAxisState() {
+    public Long getAxisState() {
         return this.axisState;
     }
 
-    public void setAxisState(Integer axisState) {
+    public void setAxisState(Long axisState) {
         this.axisState = axisState;
     }
 
-    public Integer getAppIsRunning() {
+    public Long getAppIsRunning() {
         return this.appIsRunning;
     }
 
-    public void setAppIsRunning(Integer appIsRunning) {
+    public void setAppIsRunning(Long appIsRunning) {
         this.appIsRunning = appIsRunning;
     }
 
-    public Integer getHeartBeatHost() {
+    public Long getRoadFeel() {
+        return this.roadFeel;
+    }
+
+    public void setRoadFeel(Long roadFeel) {
+        this.roadFeel = roadFeel;
+    }
+
+    public Long getHeartBeatHost() {
         return this.heartBeatHost;
     }
 
-    public void setHeartBeatHost(Integer heartBeatHost) {
+    public void setHeartBeatHost(Long heartBeatHost) {
         this.heartBeatHost = heartBeatHost;
     }
 
@@ -225,28 +232,12 @@ public class Signal {
         this.vbus = vbus;
     }
 
-    public Double getIqSetpoint() {
-        return this.iqSetpoint;
-    }
-
-    public void setIqSetpoint(Double iqSetpoint) {
-        this.iqSetpoint = iqSetpoint;
-    }
-
     public Double getIqMeasured() {
         return this.iqMeasured;
     }
 
     public void setIqMeasured(Double iqMeasured) {
         this.iqMeasured = iqMeasured;
-    }
-
-    public Double getIqFilt() {
-        return this.iqFilt;
-    }
-
-    public void setIqFilt(Double iqFilt) {
-        this.iqFilt = iqFilt;
     }
 
     public Double getPedalTorque() {
@@ -321,22 +312,6 @@ public class Signal {
         this.torqueCmd = torqueCmd;
     }
 
-    public Double getRoadFeel() {
-        return this.roadFeel;
-    }
-
-    public void setRoadFeel(Double roadFeel) {
-        this.roadFeel = roadFeel;
-    }
-
-    public Double getDamping() {
-        return this.damping;
-    }
-
-    public void setDamping(Double damping) {
-        this.damping = damping;
-    }
-
     public Double getInertia() {
         return this.inertia;
     }
@@ -345,20 +320,20 @@ public class Signal {
         this.inertia = inertia;
     }
 
-    public Double getTorqueSignal() {
-        return this.torqueSignal;
+    public Double getAccel() {
+        return this.accel;
     }
 
-    public void setTorqueSignal(Double torqueSignal) {
-        this.torqueSignal = torqueSignal;
+    public void setAccel(Double accel) {
+        this.accel = accel;
     }
 
-    public Double getTest() {
-        return this.test;
+    public Double getMagneto() {
+        return this.magneto;
     }
 
-    public void setTest(Double test) {
-        this.test = test;
+    public void setMagneto(Double magneto) {
+        this.magneto = magneto;
     }
 
     @Generated(hash = 678545556)

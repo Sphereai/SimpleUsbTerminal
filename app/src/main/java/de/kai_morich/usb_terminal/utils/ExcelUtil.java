@@ -39,6 +39,8 @@ public class ExcelUtil {
     private static int appIsRunningIndex;
     private static int heartbeatHostIndex;
     private static int loopTimeIndex;
+    private static int magnetoXIndex;
+    private static int accelZIndex;
     private static int vbusIndex;
     private static int iqSetpointIndex;
     private static int iqMeasuredIndex;
@@ -55,17 +57,14 @@ public class ExcelUtil {
     private static int dampingIndex;
     private static int inertiaIndex;
     private static int torqueCmdIndex;
+    private static int accelIndex;
+    private static int magnetoIndex;
     private static int torqueSignalIndex;
     private static int testIndex;
 
     private static int rowNumber;
 
     public static void exportAllSignals(MainActivity activity, long trialId, int trialNumber) {
-
-        System.setProperty("org.apache.poi.javax.xml.stream.XMLInputFactory", "com.fasterxml.aalto.stax.InputFactoryImpl");
-        System.setProperty("org.apache.poi.javax.xml.stream.XMLOutputFactory", "com.fasterxml.aalto.stax.OutputFactoryImpl");
-        System.setProperty("org.apache.poi.javax.xml.stream.XMLEventFactory", "com.fasterxml.aalto.stax.EventFactoryImpl");
-
         App app = (App) activity.getApplicationContext();
         Cursor cursor = DatabaseManager.getSignalsQuery(app, trialId);
 
@@ -85,7 +84,7 @@ public class ExcelUtil {
                 Sheet sheet = workbook.createSheet("trials_signals");
                 XSSFRow headerRow = (XSSFRow) sheet.createRow(0);
 
-                List<String> headers = new ArrayList<>(Arrays.asList("date", "cadence", "position", "torque", "power", "error", "motor_error", "encoder_error", "axis_state", "app_is_running", "heartbeat_host", "loop_time (us)", "vbus", "iq_setpoint", "iq_measured", "iq_filt", "pedal_torque", "pedal_vel", "pedal_pos", "pedal_power", "encoder_pos", "encoder_vel", "vel_cmd", "acc_cmd", "roadfeel", "damping", "inertia", "torque_cmd", "torque_signal", "test"));
+                List<String> headers = new ArrayList<>(Arrays.asList("date", "cadence", "position", "torque", "power", "error", "motor_error", "axis_state", "app_is_running", "roadfeel", "heartbeat_host", "loop_time (us)", "Magneto_x", "Accel_z", "vbus", "iq_measured", "pedal_torque", "pedal_vel", "pedal_pos", "pedal_power", "encoder_pos", "encoder_vel", "vel_cmd", "acc_cmd", "torque_cmd", "inertia", "Accel", "Magneto"));
 
                 for (int index = 0; index < headers.size(); index++) {
                     XSSFCell cell = headerRow.createCell(index);
@@ -124,57 +123,57 @@ public class ExcelUtil {
                     if (cursor.isNull(errorIndex))
                         row.createCell(5);
                     else
-                        row.createCell(5).setCellValue((double) cursor.getInt(errorIndex));
+                        row.createCell(5).setCellValue((double) cursor.getLong(errorIndex));
 
                     if (cursor.isNull(motorErrorIndex))
                         row.createCell(6);
                     else
-                        row.createCell(6).setCellValue((double) cursor.getInt(motorErrorIndex));
-
-                    if (cursor.isNull(encoderErrorIndex))
-                        row.createCell(7);
-                    else
-                        row.createCell(7).setCellValue((double) cursor.getInt(encoderErrorIndex));
+                        row.createCell(6).setCellValue((double) cursor.getLong(motorErrorIndex));
 
                     if (cursor.isNull(axisStateIndex))
                         row.createCell(8);
                     else
-                        row.createCell(8).setCellValue((double) cursor.getInt(axisStateIndex));
+                        row.createCell(8).setCellValue((double) cursor.getLong(axisStateIndex));
 
                     if (cursor.isNull(appIsRunningIndex))
                         row.createCell(9);
                     else
-                        row.createCell(9).setCellValue((double) cursor.getInt(appIsRunningIndex));
+                        row.createCell(9).setCellValue((double) cursor.getLong(appIsRunningIndex));
+
+                    if (cursor.isNull(roadfeelIndex))
+                        row.createCell(24);
+                    else
+                        row.createCell(24).setCellValue(cursor.getLong(roadfeelIndex));
 
                     if (cursor.isNull(heartbeatHostIndex))
                         row.createCell(10);
                     else
-                        row.createCell(10).setCellValue((double) cursor.getInt(heartbeatHostIndex));
+                        row.createCell(10).setCellValue((double) cursor.getLong(heartbeatHostIndex));
 
                     if (cursor.isNull(loopTimeIndex))
                         row.createCell(11);
                     else
-                        row.createCell(11).setCellValue((double) cursor.getInt(loopTimeIndex));
+                        row.createCell(11).setCellValue(cursor.getInt(loopTimeIndex));
+
+                    if (cursor.isNull(magnetoXIndex))
+                        row.createCell(11);
+                    else
+                        row.createCell(11).setCellValue(cursor.getInt(magnetoXIndex));
+
+                    if (cursor.isNull(accelZIndex))
+                        row.createCell(12);
+                    else
+                        row.createCell(12).setCellValue(cursor.getInt(accelZIndex));
 
                     if (cursor.isNull(vbusIndex))
                         row.createCell(12);
                     else
                         row.createCell(12).setCellValue(cursor.getDouble(vbusIndex));
 
-                    if (cursor.isNull(iqSetpointIndex))
-                        row.createCell(13);
-                    else
-                        row.createCell(13).setCellValue(cursor.getDouble(iqSetpointIndex));
-
                     if (cursor.isNull(iqMeasuredIndex))
                         row.createCell(14);
                     else
                         row.createCell(14).setCellValue(cursor.getDouble(iqMeasuredIndex));
-
-                    if (cursor.isNull(iqFiltIndex))
-                        row.createCell(15);
-                    else
-                        row.createCell(15).setCellValue(cursor.getDouble(iqFiltIndex));
 
                     if (cursor.isNull(pedalTorqueIndex))
                         row.createCell(16);
@@ -216,35 +215,25 @@ public class ExcelUtil {
                     else
                         row.createCell(23).setCellValue(cursor.getDouble(accCmdIndex));
 
-                    if (cursor.isNull(roadfeelIndex))
-                        row.createCell(24);
+                    if (cursor.isNull(torqueCmdIndex))
+                        row.createCell(27);
                     else
-                        row.createCell(24).setCellValue(cursor.getDouble(roadfeelIndex));
-
-                    if (cursor.isNull(dampingIndex))
-                        row.createCell(25);
-                    else
-                        row.createCell(25).setCellValue(cursor.getDouble(dampingIndex));
+                        row.createCell(27).setCellValue(cursor.getDouble(torqueCmdIndex));
 
                     if (cursor.isNull(inertiaIndex))
                         row.createCell(26);
                     else
                         row.createCell(26).setCellValue(cursor.getDouble(inertiaIndex));
 
-                    if (cursor.isNull(torqueCmdIndex))
-                        row.createCell(27);
-                    else
-                        row.createCell(27).setCellValue(cursor.getDouble(torqueCmdIndex));
-
-                    if (cursor.isNull(torqueSignalIndex))
+                    if (cursor.isNull(accelIndex))
                         row.createCell(28);
                     else
-                        row.createCell(28).setCellValue(cursor.getDouble(torqueSignalIndex));
+                        row.createCell(28).setCellValue(cursor.getDouble(accelIndex));
 
-                    if (cursor.isNull(testIndex))
+                    if (cursor.isNull(magnetoIndex))
                         row.createCell(29);
                     else
-                        row.createCell(29).setCellValue(cursor.getDouble(testIndex));
+                        row.createCell(29).setCellValue(cursor.getDouble(magnetoIndex));
 
                     handler.post(() -> activity.setProgressValue(rowNumber));
                     rowNumber++;
@@ -275,15 +264,15 @@ public class ExcelUtil {
         powerIndex = cursor.getColumnIndex("power");
         errorIndex = cursor.getColumnIndex("error");
         motorErrorIndex = cursor.getColumnIndex("motor_error");
-        encoderErrorIndex = cursor.getColumnIndex("encoder_error");
         axisStateIndex = cursor.getColumnIndex("axis_state");
         appIsRunningIndex = cursor.getColumnIndex("app_is_running");
+        roadfeelIndex = cursor.getColumnIndex("roadfeel");
         heartbeatHostIndex = cursor.getColumnIndex("heartbeat_host");
         loopTimeIndex = cursor.getColumnIndex("loop_time");
+        magnetoXIndex = cursor.getColumnIndex("magneto_x");
+        accelZIndex = cursor.getColumnIndex("accel_z");
         vbusIndex = cursor.getColumnIndex("vbus");
-        iqSetpointIndex = cursor.getColumnIndex("iq_setpoint");
         iqMeasuredIndex = cursor.getColumnIndex("iq_measured");
-        iqFiltIndex = cursor.getColumnIndex("iq_filt");
         pedalTorqueIndex = cursor.getColumnIndex("pedal_torque");
         pedalVelIndex = cursor.getColumnIndex("pedal_vel");
         pedalPosIndex = cursor.getColumnIndex("pedal_pos");
@@ -292,11 +281,9 @@ public class ExcelUtil {
         encoderVelIndex = cursor.getColumnIndex("encoder_vel");
         velCmdIndex = cursor.getColumnIndex("vel_cmd");
         accCmdIndex = cursor.getColumnIndex("acc_cmd");
-        roadfeelIndex = cursor.getColumnIndex("roadfeel");
-        dampingIndex = cursor.getColumnIndex("damping");
-        inertiaIndex = cursor.getColumnIndex("inertia");
         torqueCmdIndex = cursor.getColumnIndex("torque_cmd");
-        torqueSignalIndex = cursor.getColumnIndex("torque_signal");
-        testIndex = cursor.getColumnIndex("test");
+        inertiaIndex = cursor.getColumnIndex("inertia");
+        accelIndex = cursor.getColumnIndex("accel");
+        magnetoIndex = cursor.getColumnIndex("magneto");
     }
 }

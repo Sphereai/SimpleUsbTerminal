@@ -9,7 +9,7 @@ android {
     compileSdkVersion 32
     defaultConfig {
         targetSdkVersion 32
-        minSdkVersion 19
+        minSdkVersion 26
         vectorDrawables.useSupportLibrary true
         applicationId "de.kai_morich.usb_terminal"
         versionCode 1
@@ -50,7 +50,6 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:29.2.1')
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.google.firebase:firebase-analytics'
-
 
     implementation group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
     implementation group: 'org.apache.xmlbeans', name: 'xmlbeans', version: '3.1.0'
