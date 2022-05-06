@@ -210,6 +210,7 @@ public class CounterFragment extends Fragment {
     }
 
     private void addSignals(long trialDataId) {
+        /*
         Signal signal = new Signal();
         signal.setTrialDataId(trialDataId);
         signal.setError(0);
@@ -240,6 +241,7 @@ public class CounterFragment extends Fragment {
 
         SignalDao signalDao = daoSession.getSignalDao();
         signalDao.insertInTx(signal);
+         */
     }
 }
 
